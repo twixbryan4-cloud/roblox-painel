@@ -58,12 +58,25 @@ local function addStroke(parent, color, transparency, thickness)
     })
 end
 
+local activeTweens = {}
+
 local function tween(object, duration, properties)
+    local previous = activeTweens[object]
+    if previous then
+        previous:Cancel()
+    end
+
     local animation = TweenService:Create(
         object,
         TweenInfo.new(duration, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
         properties
     )
+    activeTweens[object] = animation
+    animation.Completed:Connect(function()
+        if activeTweens[object] == animation then
+            activeTweens[object] = nil
+        end
+    end)
     animation:Play()
     return animation
 end
@@ -149,7 +162,21 @@ local loadTween = tween(loadingFill, 1.05, {
     Size = UDim2.new(1, 0, 1, 0),
 })
 loadTween.Completed:Wait()
-task.wait(0.18)
+
+for _, item in ipairs(loadingGui:GetDescendants()) do
+    if item:IsA("TextLabel") or item:IsA("TextButton") then
+        tween(item, 0.18, {
+            TextTransparency = 1,
+            BackgroundTransparency = 1,
+        })
+    elseif item:IsA("Frame") then
+        tween(item, 0.18, {BackgroundTransparency = 1})
+    elseif item:IsA("UIStroke") then
+        tween(item, 0.18, {Transparency = 1})
+    end
+end
+
+task.wait(0.2)
 loadingGui:Destroy()
 
 -- Interface principal
@@ -165,7 +192,7 @@ local shade = create("Frame", screenGui, {
     Name = "Shade",
     Size = UDim2.fromScale(1, 1),
     BackgroundColor3 = Color3.fromRGB(3, 5, 10),
-    BackgroundTransparency = 0.38,
+    BackgroundTransparency = 1,
     BorderSizePixel = 0,
 })
 
@@ -173,7 +200,7 @@ local panel = create("Frame", shade, {
     Name = "Panel",
     AnchorPoint = Vector2.new(0.5, 0.5),
     Position = UDim2.fromScale(0.5, 0.5),
-    Size = UDim2.fromOffset(510, 355),
+    Size = UDim2.fromOffset(490, 340),
     BackgroundColor3 = COLORS.panel,
     BorderSizePixel = 0,
 })
@@ -415,6 +442,9 @@ local floatingButton = create("TextButton", screenGui, {
 })
 addCorner(floatingButton, 19)
 addStroke(floatingButton, COLORS.accent, 0.12, 1.5)
+local floatingScale = create("UIScale", floatingButton, {
+    Scale = 1,
+})
 create("UIGradient", floatingButton, {
     Color = ColorSequence.new(
         Color3.fromRGB(23, 37, 62),
@@ -445,22 +475,45 @@ addCorner(floatingDot, 10)
 addStroke(floatingDot, COLORS.panel, 0, 2)
 
 local isOpen = true
+panel.Size = UDim2.fromOffset(490, 340)
+task.defer(function()
+    if screenGui.Parent then
+        tween(panel, 0.3, {Size = UDim2.fromOffset(510, 355)})
+        tween(shade, 0.3, {BackgroundTransparency = 0.38})
+    end
+end)
 
 local function setPanelOpen(open)
+    if isOpen == open then
+        return
+    end
+
     isOpen = open
     if open then
-        floatingButton.Visible = false
         shade.Visible = true
-        panel.Size = UDim2.fromOffset(490, 340)
-        tween(panel, 0.18, {Size = UDim2.fromOffset(510, 355)})
         shade.BackgroundTransparency = 1
-        tween(shade, 0.18, {BackgroundTransparency = 0.38})
+        panel.Size = UDim2.fromOffset(490, 340)
+        tween(panel, 0.24, {Size = UDim2.fromOffset(510, 355)})
+        tween(shade, 0.24, {BackgroundTransparency = 0.38})
+
+        if floatingButton.Visible then
+            tween(floatingScale, 0.14, {Scale = 0.72})
+            task.delay(0.14, function()
+                if isOpen then
+                    floatingButton.Visible = false
+                    floatingScale.Scale = 1
+                end
+            end)
+        end
     else
-        tween(shade, 0.16, {BackgroundTransparency = 1})
-        task.delay(0.17, function()
+        tween(panel, 0.18, {Size = UDim2.fromOffset(490, 340)})
+        tween(shade, 0.2, {BackgroundTransparency = 1})
+        task.delay(0.21, function()
             if not isOpen then
                 shade.Visible = false
                 floatingButton.Visible = true
+                floatingScale.Scale = 0.76
+                tween(floatingScale, 0.2, {Scale = 1})
             end
         end)
     end
