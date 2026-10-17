@@ -1,81 +1,117 @@
-# delta-project — Reference panel 0.2.0
+# delta-project — Video reference panel 0.3.0
 
-Interface Lua independente, implementada a partir das imagens de referencia.
-Usa painel preto compacto, categorias na lateral, controles em duas colunas,
-transicao curta de categoria e uma previa 3D do avatar em painel separado.
+Painel Lua independente recriado a partir das imagens e dos dois videos enviados.
+Mantem o visual preto compacto, categorias na lateral, controles em duas colunas,
+fade curto entre categorias e previa 3D do avatar.
 
-O codigo fica em `delta-project/main.lua`, na branch `delta-project-zero` do
-repositorio `twixbryan4-cloud/roblox-painel`.
+Codigo: `delta-project/main.lua`, branch `delta-project-zero` do repositorio
+`twixbryan4-cloud/roblox-painel`.
 
-## Executar
+## Executar e comparar com o video
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/twixbryan4-cloud/roblox-painel/delta-project-zero/delta-project/main.lua"))()
 ```
 
-O painel abre em **World**. Use **Insert** ou o botao flutuante **≡** para
-ocultar e reabrir. Arraste a parte vazia da barra superior para mover o painel;
-arraste o avatar da previa para gira-lo. As colunas e a lista de categorias
-tem rolagem independente, inclusive por toque.
+1. Toque em **Blue look**, na barra superior, para aplicar a composicao azul.
+2. Em **World → Video looks**, compare **Blue**, **Violet** e **Crimson lighting**.
+3. Em **World → Circle**, use **Test Circle** para ver o circulo no chao.
+4. Em **Models**, ajuste o chapeu e o halo. Em **World**, ajuste aura, rastro e linhas.
+
+**Insert** ou **≡** ocultam e reabrem o painel. A parte vazia da barra superior
+permite arrastar a janela, e arrastar a previa gira o avatar. Colunas e categorias
+tem rolagem independente e suporte a toque. Os efeitos comecam desativados;
+os presets os ativam em conjunto.
+
+## Acrescentado apos a analise dos videos
+
+| Elemento observado | Implementacao |
+| --- | --- |
+| Aura azul/violeta em espiral | Ribbons orbitais animados, particulas e selecao combinada de Angelic, Ambient e Nimb. |
+| Anel luminoso sobre o avatar | Halo de geometria local, com cor, raio, altura, inclinacao e rotacao. |
+| Chapeu conico | Modelo procedural com triangulos, cor, tamanho, altura e rotacao. |
+| Constelacoes e linhas no ambiente | Grupos de linhas 3D com movimento, fade, cor, quantidade, largura e glow. |
+| Particulas flutuando pela cena | Emissor local proximo a camera, com cor e quantidade ajustaveis. |
+| Circulo no chao | Aneis e pentagrama projetados sobre o piso, com vida, crescimento, cor, brilho e rotacao. |
+| Rastro | Sparkle, Snow, Stars, Ribbon e Smoke, com tamanho, densidade, comprimento, brilho, espalhamento e deriva. Snow e Stars sao variacoes procedurais do emissor, sem as texturas privadas do original. |
+| Menu de tipos de aura | Selecao multipla com feedback imediato. |
+| Efeitos de morte | Chams temporario e Neon Burst em eventos de morte do alvo escolhido, alem de botao para testar. |
+| Sons | IDs configuraveis para dano e morte, dependentes das permissoes do audio no jogo. |
+| Geometria animada no menu | Wireframe 2D projetado e animado enquanto a categoria Menu esta visivel. |
+| Lista de configuracoes | Salvar, listar, selecionar, carregar, copiar, excluir e restaurar configuracoes do proprio projeto. |
 
 ## Categorias
 
-| Categoria | Controles implementados |
-| --- | --- |
-| ESP | Contorno dos jogadores, nomes, distancia em studs, vida, filtro de equipe e alcance. |
-| World | Presets de iluminacao, estrelas, fog, bloom, sun rays, blur, color grade, atmosfera, aura, rastro e cores. |
-| Screen | FOV, mira e watermark com FPS e horario local. |
-| Skins | Cor e material locais do personagem, com restauracao. |
-| Models | Previa do avatar, silhueta branca e rotacao. |
-| Emotes | Tentativa de reproduzir emotes que o avatar possui; velocidade e parada. |
-| Animations | Velocidade e parada dos emotes iniciados pelo painel, alem da rotacao da previa. |
-| Helpers | Atualizar avatar, restaurar configuracoes, desativar efeitos e descarregar. |
-| Menu | Tecla de abertura, transparencia, escala e configuracoes. |
-| Music | Reproducao de audio por ID, volume, pausa e repeticao. |
+- **ESP:** contorno, nomes, distancia em studs, vida, equipe e alcance.
+- **World:** shaders, skybox, iluminacao, aura, rastro, circulos, linhas e efeitos.
+- **Screen:** FOV, mira, watermark e particulas de ambiente.
+- **Skins:** cor e material locais do personagem, com restauracao.
+- **Models:** previa, silhueta branca, rotacao, chapeu e halo.
+- **Emotes / Animations:** emotes disponiveis no avatar, velocidade e parada.
+- **Helpers:** atualizar avatar, restaurar ajustes, desativar efeitos e descarregar.
+- **Menu:** tecla, escala, transparencia, qualidade, arte da lateral e configuracoes.
+- **Music:** audio por ID, pausa, volume e repeticao.
 
-Os efeitos de mundo, aparencia e ESP sao locais. Aura e rastro comecam
-**desativados**. As opcoes extras de fog, bloom, blur e atmosfera aparecem ao
-ativar o respectivo efeito; a busca tambem pode encontra-las.
+Os efeitos sao locais. `Self` seleciona seu personagem. `Others` seleciona os
+jogadores mais proximos, dentro de 500 studs, com limite de 2 na qualidade baixa
+e 4 na alta. Efeitos de dano e morte observam os eventos dos alvos; o painel
+nao determina quem causou o dano e nao aplica dano.
 
-## Configuracoes e encerramento
+## Qualidade e encerramento
 
-**Menu → Config** salva e carrega apenas valores validados em JSON. O recurso
-usa `readfile` e `writefile` quando o ambiente disponibiliza essas funcoes;
-mostra uma mensagem quando nao pode gravar ou ler arquivos. Os nomes sao
-limitados a letras, numeros, `_` e `-`.
+**Menu → Effect quality** oferece Auto, Low e High. Auto usa o perfil reduzido
+em dispositivos de toque: ate 14 grupos de linhas, menos segmentos e menos
+particulas. High permite ate 32 grupos. Cor, velocidade, largura e rotacao sao
+atualizadas sem recriar toda a cena durante esses ajustes.
 
-**Unload** remove os objetos e eventos criados pelo painel e restaura as
-propriedades que ele alterou. Reexecutar o loader encerra a instancia anterior.
-A interface acompanha o respawn do personagem.
+**Unload** remove objetos, eventos e sons criados pelo painel e restaura as
+propriedades de iluminacao e camera que ele alterou. Reexecutar encerra a
+instancia anterior. Os alvos sao atualizados apos respawn.
 
-## Limites desta versao
+## Configuracoes
 
-As imagens nao contem o codigo, a ilustracao original da lateral, os arquivos
-de skybox nem os efeitos exclusivos do painel de referencia. A lateral usa
-uma miniatura do seu avatar, e os efeitos foram recriados com recursos do
-Roblox. Nao e uma copia dos arquivos originais.
+As configuracoes contem apenas valores validados em JSON. O painel usa as
+funcoes de arquivo e clipboard quando disponiveis no ambiente e informa
+quando uma operacao nao esta disponivel. Leitura, listagem e exclusao ficam
+restritas aos nomes de configuracao do proprio projeto.
 
-A previa 3D mostra o avatar e sua silhueta; ela nao renderiza os emissores de
-particulas do mundo. Musicas dependem das permissoes de audio do jogo. Emotes
-dependem dos que estao disponiveis no avatar.
+Perfis da versao 0.2 continuam aceitos; os campos novos usam seus valores iniciais.
+IDs de audio e imagem aceitam somente numeros.
 
-## Validacao
+## Recursos que precisam dos arquivos originais
 
-- Sintaxe compilada em Lua 5.4.
-- Inicializacao das dez categorias e callbacks dos controles verificados com
-  uma API Roblox simulada.
-- Verificadas normalizacao de valores, toque ativo, limpeza de popups,
-  configuracoes, limites da janela, ocultar/reabrir, reexecucao e unload.
-- Verificada restauracao de iluminacao e FOV e a preservacao dos personagens
-  originais ao remover os objetos de ESP.
+Os videos nao fornecem o codigo do painel original, a ilustracao da lateral,
+as seis imagens da skybox vermelha ou suas texturas de efeitos. Os recursos
+visiveis foram recriados com geometria e recursos do Roblox; nao sao os
+arquivos originais.
 
-**A renderizacao real no Roblox e a execucao no Delta ainda precisam ser
-validadas no dispositivo.** A simulacao nao substitui esse teste.
+- **Menu → Artwork ID:** substitui a miniatura do seu avatar por uma imagem
+  publicada no Roblox, quando seu ID for conhecido.
+- **World → Skybox → Custom:** libera seis campos em **Skybox assets** para
+  Back, Down, Front, Left, Right e Up. Todas as faces precisam de IDs validos.
+- **Crimson lighting** recria uma iluminacao vermelha; a paisagem da floresta
+  depende das imagens originais da skybox.
+- A previa mostra o avatar, o chapeu e o halo; emissores de particulas do mundo
+  nao sao renderizados dentro dela.
 
-## APIs de referencia
+## Validacao realizada
 
-- [ViewportFrame](https://create.roblox.com/docs/reference/engine/classes/ViewportFrame)
-- [ParticleEmitter](https://create.roblox.com/docs/reference/engine/classes/ParticleEmitter)
-- [Trail](https://create.roblox.com/docs/reference/engine/classes/Trail)
-- [GuiBase2d](https://create.roblox.com/docs/reference/engine/classes/GuiBase2d)
-- [Humanoid](https://create.roblox.com/docs/reference/engine/classes/Humanoid)
+- Compilacao em Lua 5.4 e testes de contrato com uma API Roblox simulada.
+- Dez categorias, callbacks, toque ativo, seletor de cor e selecao multipla.
+- Presets, criacao e encerramento de geometria, ciclos de animacao, rastro por
+  movimento, expiracao de circulos e perfil de qualidade para celular.
+- Troca de alvos apos respawn, eventos de dano/morte, limites de objetos e sons.
+- Listagem, copia e exclusao de configuracoes e restauracao das seis faces de
+  skybox, incluindo propriedades booleanas originalmente desativadas.
+- Ocultar/reabrir, reexecucao, unload, restauracao de FOV e iluminacao e
+  preservacao dos personagens originais ao remover efeitos.
+
+**A execucao e a renderizacao reais no Roblox/Delta ainda precisam ser validadas
+no dispositivo.** Os testes simulados nao substituem esse teste.
+
+APIs consultadas: [ViewportFrame](https://create.roblox.com/docs/reference/engine/classes/ViewportFrame),
+[ParticleEmitter](https://create.roblox.com/docs/reference/engine/classes/ParticleEmitter),
+[Trail](https://create.roblox.com/docs/reference/engine/classes/Trail),
+[CFrame](https://create.roblox.com/docs/reference/engine/datatypes/CFrame),
+[RaycastParams](https://create.roblox.com/docs/reference/engine/datatypes/RaycastParams) e
+[Player](https://create.roblox.com/docs/reference/engine/classes/Player).

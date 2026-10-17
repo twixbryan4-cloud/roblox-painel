@@ -1,4 +1,4 @@
--- delta-project / reference panel / 0.2.0
+-- delta-project / reference panel / 0.3.0
 -- Standalone client UI. No remote libraries, copied scripts or external media files.
 local environment = _G
 if type(getgenv) == "function" then
@@ -9,7 +9,7 @@ local ENV_KEY = "__DELTA_PROJECT_INSTANCE"
 local previous = environment[ENV_KEY]
 if type(previous) == "table" and type(previous.Destroy) == "function" then previous:Destroy() end
 
-local App = {Name = "delta-project", Version = "0.2.0", Active = true, Cleanups = {}, Actions = {}, Listeners = {}, State = {}, UI = {}, FX = {}}
+local App = {Name = "delta-project", Version = "0.3.0", Active = true, Cleanups = {}, Actions = {}, Listeners = {}, State = {}, UI = {}, FX = {}}
 environment[ENV_KEY] = App
 function App:AddCleanup(callback)
     assert(self.Active and type(callback) == "function", "Invalid cleanup")
@@ -70,10 +70,23 @@ local function start()
         Preview = true, Silhouette = true, PreviewSpin = false, PreviewSpeed = 12,
         Watermark = true, Opacity = 0.04, MenuScale = 1, Keybind = "Insert",
         MusicId = "", MusicVolume = 0.4, MusicLoop = true, EmoteSpeed = 1,
+        Quality = "Auto", ArtworkId = "", Skybox = "Game", SkyBackId = "", SkyDownId = "", SkyFrontId = "", SkyLeftId = "", SkyRightId = "", SkyUpId = "",
+        AuraTarget = "Self", AuraAmbient = true, AuraAngelic = false, AuraNimb = false, AuraRadius = 1.5, AuraSpeed = 2.8,
+        TrailTarget = "Self", TrailSize = 7, TrailLength = 9, TrailDensity = 140, TrailSpread = 82, TrailDrift = 100, TrailAlwaysOn = false,
+        Hat = false, HatSize = 4, HatHeight = 0.65, HatSpin = 0, HatColor = "E6E9EF", Halo = false, HaloRadius = 1.8, HaloHeight = 1.4, HaloTilt = 12, HaloSpin = 35, HaloColor = "A9D6FF", CosmeticTarget = "Self",
+        Glyphs = false, GlyphCount = 26, GlyphSpeed = 47, GlyphTrail = 34, GlyphLifetime = 3, GlyphWidth = 2, GlyphGlow = true, GlyphColorMode = "Single", GlyphColor = "B8D5FF",
+        Circle = false, CircleStyle = "Konchal", CircleSize = 4, CircleLife = 8, CircleGrow = 220, CircleBrightness = 1, CircleSpin = 0, CircleTarget = "Self", CircleColor = "B8D5FF",
+        AmbientParticles = false, AmbientRate = 25, AmbientColor = "BCD9FF",
+        KillChams = false, NeonBurst = false, KillTarget = "Others", NeonColor = "B3D4FF", HitSound = false, HitSoundId = "", KillSound = false, KillSoundId = "", EffectVolume = 0.5,
     }
     local ranges = {Stars = {0, 7000}, FogDistance = {40, 3000}, BloomIntensity = {0, 2}, BlurSize = {0, 24}, AtmosphereDensity = {0, 0.8}, ClockTime = {0, 24}, ExposureValue = {-2, 2}, AuraGlow = {0, 1}, AuraRate = {0, 120}, AuraSize = {0.1, 4}, AuraLifetime = {0.3, 3}, AuraGrow = {25, 250}, AuraSpin = {0, 180}, TrailLifetime = {0.1, 3}, TrailWidth = {0.1, 4}, TrailBrightness = {0, 1}, ESPDistance = {25, 2000}, FOV = {40, 120}, CrosshairSize = {2, 15}, CrosshairGap = {0, 15}, PreviewSpeed = {0, 45}, Opacity = {0, 0.6}, MenuScale = {0.65, 1.25}, MusicVolume = {0, 1}, EmoteSpeed = {0.25, 2}}
     local choices = {Preset = {"Game", "Night", "Soft", "Cold", "Sunset"}, Celestial = {"Game", "Stars", "Hidden"}, AuraStyle = {"Ambient", "Angelic", "Flame", "Sparkles"}, TrailStyle = {"Sparkle", "Ribbon", "Smoke"}, Material = {"SmoothPlastic", "Neon", "ForceField"}, Keybind = {"Insert", "RightShift", "Home", "PageDown"}}
-    local colorKeys = {AuraColor = true, TrailColor = true, ESPColor = true, TintColor = true}
+    for key,value in pairs({AuraRadius={0.5,4},AuraSpeed={0.2,6},TrailSize={1,12},TrailLength={1,20},TrailDensity={0,200},TrailSpread={0,100},TrailDrift={0,100},HatSize={1,8},HatHeight={-0.5,3},HatSpin={0,180},HaloRadius={0.5,4},HaloHeight={0,4},HaloTilt={-75,75},HaloSpin={0,180},GlyphCount={0,40},GlyphSpeed={0,100},GlyphTrail={0,100},GlyphLifetime={0.5,8},GlyphWidth={0.5,4},CircleSize={1,12},CircleLife={0.5,12},CircleGrow={25,300},CircleBrightness={0,1},CircleSpin={0,180},AmbientRate={0,100},EffectVolume={0,1}}) do ranges[key]=value end
+    for key,value in pairs({Quality={"Auto","Low","High"},Skybox={"Game","Custom"},AuraTarget={"Self","Others"},TrailTarget={"Self","Others"},CosmeticTarget={"Self","Others"},CircleTarget={"Self","Others"},KillTarget={"Self","Others"},GlyphColorMode={"Single","Rainbow"},CircleStyle={"Konchal","Orbit","Pentagram"}}) do choices[key]=value end
+    choices.AuraStyle={"Ambient","Angelic","Vortex","Flame","Sparkles"}
+    choices.TrailStyle={"Sparkle","Snow","Stars","Ribbon","Smoke"}
+    choices.Preset={"Game","Night","Soft","Cold","Sunset","Crimson"}
+    local colorKeys = {AuraColor=true,TrailColor=true,ESPColor=true,TintColor=true,HatColor=true,HaloColor=true,GlyphColor=true,CircleColor=true,AmbientColor=true,NeonColor=true}
     for key, value in pairs(defaults) do App.State[key] = value end
     App.Defaults, App.Ranges, App.Choices = defaults, ranges, choices
     UI.Pages, UI.Tabs, UI.Cards, UI.Groups = {}, {}, {}, {}
@@ -95,7 +108,7 @@ local function start()
             local found = false
             for _, item in ipairs(choices[key]) do if item == value then found = true break end end
             if not found then return nil end
-        elseif key == "MusicId" then
+        elseif key:match("Id$") then
             if #value > 22 or (value ~= "" and not value:match("^%d+$")) then return nil end
         end
         return value
@@ -117,6 +130,8 @@ local function start()
     function App:ApplyAll()
         FX:World()
         FX:Character()
+        FX:BuildVideo()
+        FX:RefreshDeathHooks()
         FX:RefreshTint()
         FX:Camera()
         FX:RefreshESP()
@@ -127,11 +142,19 @@ local function start()
         UI.Watermark.Visible = self.State.Watermark
         UI.Crosshair.Visible = self.State.Crosshair
         UI:DrawCrosshair()
+        UI.Artwork.Image=self.State.ArtworkId=="" and ("rbxthumb://type=Avatar&id="..player.UserId.."&w=420&h=420") or ("rbxassetid://"..self.State.ArtworkId)
         FX.Sound.Volume, FX.Sound.Looped = self.State.MusicVolume, self.State.MusicLoop
     end
     function App:Apply(key)
         if key:match("^Aura") or key:match("^Trail") or key == "Rainbow" then
+            if key=="AuraStyle" then
+                if self.State.AuraStyle=="Angelic" or self.State.AuraStyle=="Vortex" then self:Set("AuraAngelic",true,true) else self:Set("AuraAmbient",true,true) end
+            end
             FX:ScheduleCharacter()
+        elseif key:match("^Glyph") or key:match("^Hat") or key:match("^Halo") or key:match("^Circle") or key=="CosmeticTarget" or key=="AmbientParticles" or key=="AmbientRate" or key=="AmbientColor" then if not FX:UpdateVideoValues(key) then FX:ScheduleVideo() end
+        elseif key=="Quality" then FX:ScheduleVideo() FX:ScheduleCharacter()
+        elseif key:match("^Kill") or key:match("^HitSound") or key:match("^Neon") or key=="EffectVolume" then FX:RefreshDeathHooks()
+        elseif key=="ArtworkId" then UI.Artwork.Image=self.State.ArtworkId=="" and ("rbxthumb://type=Avatar&id="..player.UserId.."&w=420&h=420") or ("rbxassetid://"..self.State.ArtworkId)
         elseif key:match("^ESP") then FX:RefreshESP()
         elseif key == "FOV" or key == "FOVEnabled" then FX:Camera()
         elseif key == "Tint" or key == "TintColor" or key == "Material" then FX:RefreshTint()
@@ -233,7 +256,7 @@ local function start()
         self:Text(hit, "···", 13, C.Dim, {Position = UDim2.new(1, -17, 0, 0), Size = UDim2.fromOffset(17, 24), TextXAlignment = Enum.TextXAlignment.Right})
         App:Subscribe(key, function(value) box.BackgroundColor3 = value and C.White or C.Card tick.Visible = value label.TextColor3 = value and C.Text or C.Muted end)
     end
-    function UI:Slider(card, title, key, step, suffix, requiredKey)
+    function UI:Slider(card, title, key, step, suffix, requiredKey, multiplier)
         local row = self:Row(card, title, 35)
         if requiredKey then row:SetAttribute("Requires",requiredKey) App:Subscribe(requiredKey,function() self:Filter(self.Search.Text) end) end
         self:Text(row, title, 10, C.Muted, {Size = UDim2.new(0.65, 0, 0, 17)})
@@ -259,9 +282,40 @@ local function start()
         end)
         App:Subscribe(key, function(value)
             fill.Size = UDim2.fromScale((value - range[1]) / (range[2] - range[1]), 1)
-            local digits = step < 0.1 and 2 or (step < 1 and 1 or 0)
-            valueLabel.Text = string.format("%." .. digits .. "f", value) .. (suffix or "")
+            local displayStep=step*(multiplier or 1)
+            local digits = displayStep < 0.1 and 2 or (displayStep < 1 and 1 or 0)
+            valueLabel.Text = string.format("%." .. digits .. "f", value*(multiplier or 1)) .. (suffix or "")
         end)
+    end
+    function UI:Condition(card,key,value)
+        local row=card.Rows[#card.Rows]
+        row:SetAttribute("Requires",key) row:SetAttribute("RequiresValue",value==nil and true or value)
+        App:Subscribe(key,function() self:Filter(self.Search.Text) end)
+    end
+    function UI:MultiSelect(card,title,entries)
+        local row=self:Row(card,title,25)
+        self:Text(row,title,10,C.Muted,{Size=UDim2.new(0.3,0,1,0)})
+        local button
+        local function update()
+            local selected={} for _,entry in ipairs(entries) do if App.State[entry[2]] then selected[#selected+1]=entry[1] end end
+            button.Text=#selected>0 and table.concat(selected,", ") or "None"
+        end
+        button=self:Click(row,"",function()
+            local popup=self:PopupAt(button,186,#entries*27+8)
+            for index,entry in ipairs(entries) do
+                local option
+                local function label() return (App.State[entry[2]] and "✓  " or "□  ")..entry[1] end
+                option=self:Click(popup,label(),function() App:Set(entry[2],not App.State[entry[2]]) option.Text=label() end,{Position=UDim2.fromOffset(5,4+(index-1)*27),Size=UDim2.new(1,-10,0,26),BackgroundTransparency=1,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=82})
+            end
+        end,{Position=UDim2.fromScale(0.32,0),Size=UDim2.new(0.68,0,0,22),BackgroundTransparency=0.55,TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd})
+        self:New("UIPadding",{PaddingLeft=UDim.new(0,5),PaddingRight=UDim.new(0,5)},button)
+        for _,entry in ipairs(entries) do App:Subscribe(entry[2],update) end
+    end
+
+    function UI:IdField(card,title,key)
+        local box
+        box=self:Textbox(card,title,App.State[key],function(value) if not App:Set(key,value) then box.Text=App.State[key] self:Toast("Informe apenas o ID numerico do recurso") end end)
+        App:Subscribe(key,function(value) box.Text=value end) return box
     end
     function UI:ClosePopup()
         if self.Popup then self.Popup:Destroy() self.Popup = nil end
@@ -370,10 +424,11 @@ local function start()
             for _,row in ipairs(card.Rows) do
                 local matches = titleMatch or (row:GetAttribute("Search") or ""):find(query,1,true) ~= nil
                 local required=row:GetAttribute("Requires")
-                row.Visible = matches and (not required or App.State[required] or query~="")
+                local expected=row:GetAttribute("RequiresValue")
+                row.Visible = matches and (not required or App.State[required]==(expected==nil and true or expected) or query~="")
                 any = any or row.Visible
             end
-            card.Frame.Visible = any or query == ""
+            card.Frame.Visible = any or (#card.Rows==0 and query=="")
             card.Body.Visible = query ~= "" or card.Open
         end
     end
@@ -391,7 +446,7 @@ local function start()
     UI.Main=UI:New("Frame",{Name="Main",Size=UDim2.fromOffset(660,520),BackgroundColor3=C.Panel,BackgroundTransparency=App.State.Opacity},UI.Root) UI:Corner(UI.Main,6) UI:Stroke(UI.Main,0.22)
     UI.Sidebar=UI:New("Frame",{Name="Sidebar",Size=UDim2.fromOffset(140,520),BackgroundTransparency=1},UI.Main)
     UI:New("Frame",{Position=UDim2.fromOffset(140,10),Size=UDim2.new(0,1,1,-20),BackgroundColor3=C.Border,BackgroundTransparency=0.5},UI.Main)
-    UI:New("ImageLabel",{Name="AvatarArtwork",Image="rbxthumb://type=Avatar&id="..player.UserId.."&w=420&h=420",BackgroundTransparency=1,Position=UDim2.fromOffset(15,3),Size=UDim2.fromOffset(110,142),ScaleType=Enum.ScaleType.Fit},UI.Sidebar)
+    UI.Artwork=UI:New("ImageLabel",{Name="AvatarArtwork",Image="rbxthumb://type=Avatar&id="..player.UserId.."&w=420&h=420",BackgroundTransparency=1,Position=UDim2.fromOffset(15,3),Size=UDim2.fromOffset(110,142),ScaleType=Enum.ScaleType.Fit},UI.Sidebar)
     local nav=UI:New("ScrollingFrame",{Name="Categories",Position=UDim2.fromOffset(6,152),Size=UDim2.fromOffset(128,304),BackgroundTransparency=1,ScrollBarThickness=0,CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y},UI.Sidebar)
     UI:New("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,1)},nav)
     local navOrder=0
@@ -422,6 +477,7 @@ local function start()
     local top=UI:New("Frame",{Name="DragBar",BackgroundTransparency=1,Active=true,Position=UDim2.fromOffset(149,0),Size=UDim2.fromOffset(435,37)},UI.Main)
     UI.Search=UI:New("TextBox",{Name="Search",Text="",PlaceholderText="Search",ClearTextOnFocus=false,BackgroundTransparency=1,Position=UDim2.fromOffset(263,4),Size=UDim2.fromOffset(142,28),Font=Enum.Font.Gotham,TextSize=10,TextColor3=C.Text,PlaceholderColor3=C.Dim,TextXAlignment=Enum.TextXAlignment.Left},top)
     UI:Icon(top,"search",414,10,C.Muted)
+    UI:Click(top,"Blue look",function() App:VideoLook("Blue") end,{Name="VideoLook",Position=UDim2.fromOffset(5,5),Size=UDim2.fromOffset(73,25),BackgroundTransparency=1,TextSize=10,TextColor3=C.Muted})
     UI:New("Frame",{Position=UDim2.fromOffset(153,38),Size=UDim2.fromOffset(494,1),BackgroundColor3=C.Border,BackgroundTransparency=0.5},UI.Main)
     UI:Click(UI.Main,"−",function() UI:ToggleWindow(false) end,{Name="Minimize",Position=UDim2.fromOffset(590,5),Size=UDim2.fromOffset(27,27),TextSize=17,BackgroundTransparency=1})
     UI:Click(UI.Main,"×",function() UI:ToggleWindow(false) end,{Name="Hide",Position=UDim2.fromOffset(621,5),Size=UDim2.fromOffset(27,27),TextSize=17,BackgroundTransparency=1})
@@ -438,7 +494,7 @@ local function start()
     UI.BracketScale=UI:New("UIScale",{Scale=1},brackets)
     for _,entry in ipairs({{0,0,1,1},{140,0,-1,1},{0,245,1,-1},{140,245,-1,-1}}) do UI:Line(brackets,entry[1],entry[2],entry[1]+entry[3]*18,entry[2],C.Muted) UI:Line(brackets,entry[1],entry[2],entry[1],entry[2]+entry[4]*24,C.Muted) end
     UI.Float=UI:Click(UI.Gui,"≡",function() UI:ToggleWindow(not UI.Visible) end,{Name="OpenPanel",Position=UDim2.fromOffset(12,100),Size=UDim2.fromOffset(38,38),BackgroundColor3=C.Panel,TextSize=21,ZIndex=30}) UI:Corner(UI.Float,10) UI:Stroke(UI.Float,0.15)
-    UI.Watermark=UI:Text(UI.Gui,"DELTA / 0.2.0",10,C.Text,{Name="Watermark",Position=UDim2.new(1,-310,0,7),Size=UDim2.fromOffset(296,23),TextXAlignment=Enum.TextXAlignment.Right})
+    UI.Watermark=UI:Text(UI.Gui,"DELTA / 0.3.0",10,C.Text,{Name="Watermark",Position=UDim2.new(1,-310,0,7),Size=UDim2.fromOffset(296,23),TextXAlignment=Enum.TextXAlignment.Right})
     UI.ToastLabel=UI:Text(UI.Gui,"",11,C.Text,{Name="Notification",Visible=false,AnchorPoint=Vector2.new(0.5,1),Position=UDim2.new(0.5,0,1,-12),Size=UDim2.fromOffset(390,34),TextXAlignment=Enum.TextXAlignment.Center,BackgroundColor3=C.Card,BackgroundTransparency=0.05,ZIndex=90}) UI:Corner(UI.ToastLabel,5) UI:Stroke(UI.ToastLabel,0.25)
     UI.Crosshair=UI:New("Frame",{Name="Crosshair",Visible=false,AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5,0.5),Size=UDim2.fromOffset(1,1),BackgroundTransparency=1},UI.Gui)
     function UI:DrawCrosshair()
@@ -512,6 +568,7 @@ local function start()
             if original.TextureId~=nil then object.TextureId=App.State.Silhouette and "" or original.TextureId
             elseif object.Parent or original.Parent then object.Parent=App.State.Silhouette and self.PreviewHidden or original.Parent end
         end
+        if self.RefreshPreviewCosmetics then self:RefreshPreviewCosmetics() end
     end
     function UI:RefreshPreview()
         if self.PreviewModel then self.PreviewModel:Destroy() self.PreviewModel=nil end
@@ -566,6 +623,7 @@ local function start()
         local S=App.State
         local desired={}
         local presets={Night={ClockTime=0.3,Brightness=1.1,Ambient=Color3.fromRGB(64,64,96),OutdoorAmbient=Color3.fromRGB(67,72,105)},Soft={Brightness=2,Ambient=Color3.fromRGB(119,116,136),OutdoorAmbient=Color3.fromRGB(145,145,160)},Cold={ClockTime=8,Brightness=1.7,Ambient=Color3.fromRGB(93,112,143),OutdoorAmbient=Color3.fromRGB(121,142,170)},Sunset={ClockTime=17.7,Brightness=1.8,Ambient=Color3.fromRGB(132,95,106),OutdoorAmbient=Color3.fromRGB(167,129,111)}}
+        presets.Crimson={ClockTime=0,Brightness=0.7,Ambient=Color3.fromRGB(89,24,38),OutdoorAmbient=Color3.fromRGB(110,29,45),FogColor=Color3.fromRGB(61,8,16),FogEnd=800}
         for key,value in pairs(presets[S.Preset] or {}) do desired[key]=value end
         if S.TimeChange then desired.ClockTime=S.ClockTime end
         if S.Fullbright then desired.Brightness=2 desired.GlobalShadows=false desired.Ambient=Color3.fromRGB(180,180,180) end
@@ -576,7 +634,7 @@ local function start()
         for key,value in pairs(self.LightOwned) do if desired[key]==nil then Lighting[key]=value released[#released+1]=key end end
         for _,key in ipairs(released) do self.LightOwned[key]=nil end
         for key,value in pairs(desired) do self:Light(key,value) end
-        local specs={Bloom={"BloomEffect",{Intensity=S.BloomIntensity,Size=24,Threshold=1}},SunRays={"SunRaysEffect",{Intensity=0.08,Spread=0.6}},Blur={"BlurEffect",{Size=S.BlurSize}},ColorGrade={"ColorCorrectionEffect",{Brightness=0.02,Contrast=0.12,Saturation=-0.08,TintColor=Color3.fromRGB(222,226,255)}}}
+        local specs={Bloom={"BloomEffect",{Intensity=S.BloomIntensity,Size=24,Threshold=1}},SunRays={"SunRaysEffect",{Intensity=0.08,Spread=0.6}},Blur={"BlurEffect",{Size=S.BlurSize}},ColorGrade={"ColorCorrectionEffect",{Brightness=0.02,Contrast=0.12,Saturation=-0.08,TintColor=S.Preset=="Crimson" and Color3.fromRGB(255,168,185) or Color3.fromRGB(222,226,255)}}}
         for key,spec in pairs(specs) do
             if S[key] and not self.Post[key] then self.Post[key]=UI:New(spec[1],{Name="Delta"..key},Lighting) end
             local object=self.Post[key]
@@ -590,9 +648,18 @@ local function start()
             end
             self.AtmosphereObject.Density=S.AtmosphereDensity self.AtmosphereObject.Haze=1.1 self.AtmosphereObject.Color=Color3.fromRGB(170,180,209)
         elseif self.AtmosphereObject then self:RestoreAtmosphere() end
-        if S.Celestial~="Game" then
-            if not self.Sky then self.Sky=Lighting:FindFirstChildOfClass("Sky") if not self.Sky then self.Sky=UI:New("Sky",{Name="DeltaSky"},Lighting) self.SkyCreated=true end self.SkyOriginal={StarCount=self.Sky.StarCount,CelestialBodiesShown=self.Sky.CelestialBodiesShown} end
-            self.Sky.StarCount=S.Stars self.Sky.CelestialBodiesShown=S.Celestial~="Hidden"
+        local skyProperties={SkyBackId="SkyboxBk",SkyDownId="SkyboxDn",SkyFrontId="SkyboxFt",SkyLeftId="SkyboxLf",SkyRightId="SkyboxRt",SkyUpId="SkyboxUp"}
+        local ready=S.Skybox=="Custom"
+        for key in pairs(skyProperties) do if S[key]=="" then ready=false end end
+        if S.Celestial~="Game" or ready then
+            if not self.Sky then
+                self.Sky=Lighting:FindFirstChildOfClass("Sky") if not self.Sky then self.Sky=UI:New("Sky",{Name="DeltaSky"},Lighting) self.SkyCreated=true end
+                self.SkyOriginal={StarCount=self.Sky.StarCount,CelestialBodiesShown=self.Sky.CelestialBodiesShown}
+                for _,property in pairs(skyProperties) do self.SkyOriginal[property]=self.Sky[property] end
+            end
+            self.Sky.StarCount=S.Celestial=="Game" and self.SkyOriginal.StarCount or S.Stars
+            if S.Celestial=="Game" then self.Sky.CelestialBodiesShown=self.SkyOriginal.CelestialBodiesShown else self.Sky.CelestialBodiesShown=S.Celestial~="Hidden" end
+            for key,property in pairs(skyProperties) do self.Sky[property]=ready and ("rbxassetid://"..S[key]) or self.SkyOriginal[property] end
         else self:RestoreSky() end
     end
     function FX:RestoreAtmosphere()
@@ -608,35 +675,82 @@ local function start()
         end
         self.Sky,self.SkyOriginal,self.SkyCreated=nil,nil,nil
     end
+    function FX:Targets(mode)
+        if mode=="Self" then return player.Character and {player.Character} or {} end
+        local candidates={}
+        local origin=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        for _,other in ipairs(Players:GetPlayers()) do
+            local character=other.Character
+            local root=character and character:FindFirstChild("HumanoidRootPart")
+            if other~=player and root then candidates[#candidates+1]={Character=character,Distance=origin and (root.Position-origin.Position).Magnitude or 0} end
+        end
+        table.sort(candidates,function(a,b) return a.Distance<b.Distance end)
+        local selected={}
+        for index=1,math.min(#candidates,self:Budget(2,4)) do if candidates[index].Distance<=500 then selected[#selected+1]=candidates[index].Character end end
+        return selected
+    end
     function FX:ClearCharacter()
         for _,object in ipairs(self.Attachments) do pcall(function() object:Destroy() end) end
-        self.Attachments={} self.AuraEmitter=nil self.TrailObject=nil self.TrailEmitter=nil
+        self.Attachments,self.Orbits,self.AuraEmitters,self.TrailObjects,self.TrailEmitters,self.MotionTrails={},{},{},{},{},{}
+        self.AuraEmitter,self.TrailObject,self.TrailEmitter=nil,nil,nil
     end
     function FX:Character()
         self:ClearCharacter()
-        local character=player.Character
-        local root=character and character:FindFirstChild("HumanoidRootPart")
-        if not root then return end
         local S=App.State
-        local function attachment(name,position)
+        local function attachment(root,name,position)
             local object=UI:New("Attachment",{Name="Delta"..name,Position=position or Vector3.new()},root)
             self.Attachments[#self.Attachments+1]=object return object
         end
         if S.Aura then
-            local style=S.AuraStyle
-            local emitter=UI:New("ParticleEmitter",{Name="DeltaAura",Texture=style=="Flame" and "rbxasset://textures/particles/fire_main.dds" or "rbxasset://textures/particles/sparkles_main.dds",Color=ColorSequence.new(Color3.fromHex(S.AuraColor)),Rate=S.AuraRate,Lifetime=NumberRange.new(S.AuraLifetime*0.5,S.AuraLifetime),Speed=NumberRange.new(style=="Flame" and 1 or 0.2,style=="Angelic" and 3 or 1.4),SpreadAngle=Vector2.new(180,180),LightEmission=S.AuraGlow,LightInfluence=0,Size=NumberSequence.new({NumberSequenceKeypoint.new(0,S.AuraSize*0.15),NumberSequenceKeypoint.new(0.4,S.AuraSize*S.AuraGrow/100),NumberSequenceKeypoint.new(1,0)}),Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.2),NumberSequenceKeypoint.new(0.75,0.35),NumberSequenceKeypoint.new(1,1)}),Rotation=NumberRange.new(0,360),RotSpeed=NumberRange.new(-S.AuraSpin,S.AuraSpin),LockedToPart=style=="Sparkles"},attachment("Aura",Vector3.new(0,-0.4,0)))
-            self.AuraEmitter=emitter
-            if style=="Angelic" then emitter.Acceleration=Vector3.new(0,2,0) elseif style=="Flame" then emitter.Acceleration=Vector3.new(0,3,0) end
-        end
-        if S.Trail then
-            local a0=attachment("Trail0",Vector3.new(-S.TrailWidth/2,0,0.4))
-            local a1=attachment("Trail1",Vector3.new(S.TrailWidth/2,0,0.4))
-            self.TrailObject=UI:New("Trail",{Name="DeltaTrail",Attachment0=a0,Attachment1=a1,Lifetime=S.TrailLifetime,FaceCamera=true,MinLength=0.05,LightEmission=S.TrailBrightness,Color=ColorSequence.new(Color3.fromHex(S.TrailColor)),Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.1),NumberSequenceKeypoint.new(1,1)}),WidthScale=NumberSequence.new({NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(1,0)})},a0)
-            if S.TrailStyle~="Ribbon" then
-                self.TrailEmitter=UI:New("ParticleEmitter",{Name="DeltaTrailParticles",Texture=S.TrailStyle=="Smoke" and "rbxasset://textures/particles/smoke_main.dds" or "rbxasset://textures/particles/sparkles_main.dds",Color=ColorSequence.new(Color3.fromHex(S.TrailColor)),Rate=35,Lifetime=NumberRange.new(0.2,S.TrailLifetime+0.3),Speed=NumberRange.new(0,0.5),LightEmission=S.TrailBrightness,Size=NumberSequence.new({NumberSequenceKeypoint.new(0,S.TrailWidth*0.3),NumberSequenceKeypoint.new(1,0)}),Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.2),NumberSequenceKeypoint.new(1,1)}),SpreadAngle=Vector2.new(180,180)},a0)
+            for _,character in ipairs(self:Targets(S.AuraTarget)) do
+                local root=character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    local style=S.AuraStyle
+                    if S.AuraAmbient then
+                        local emitter=UI:New("ParticleEmitter",{Name="DeltaAura",Texture=style=="Flame" and "rbxasset://textures/particles/fire_main.dds" or "rbxasset://textures/particles/sparkles_main.dds",Color=ColorSequence.new(Color3.fromHex(S.AuraColor)),Rate=math.min(S.AuraRate,self:Budget(80,120)),Lifetime=NumberRange.new(S.AuraLifetime*0.5,S.AuraLifetime),Speed=NumberRange.new(0.2,style=="Angelic" and 3 or 1.4),SpreadAngle=Vector2.new(180,180),LightEmission=S.AuraGlow,LightInfluence=0,Size=NumberSequence.new({NumberSequenceKeypoint.new(0,S.AuraSize*0.15),NumberSequenceKeypoint.new(0.4,S.AuraSize*S.AuraGrow/100),NumberSequenceKeypoint.new(1,0)}),Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.25),NumberSequenceKeypoint.new(0.75,0.45),NumberSequenceKeypoint.new(1,1)}),Rotation=NumberRange.new(0,360),RotSpeed=NumberRange.new(-S.AuraSpin,S.AuraSpin),LockedToPart=style=="Sparkles"},attachment(root,"Aura",Vector3.new(0,-0.4,0)))
+                        self.AuraEmitters[#self.AuraEmitters+1]=emitter
+                        if style=="Flame" then emitter.Acceleration=Vector3.new(0,3,0) end
+                    end
+                    if S.AuraAngelic then
+                        for index=1,self:Budget(2,3) do
+                            local a0=attachment(root,"Swirl0") local a1=attachment(root,"Swirl1")
+                            local trail=UI:New("Trail",{Name="DeltaAuraSwirl",Attachment0=a0,Attachment1=a1,FaceCamera=true,Lifetime=0.65,MinLength=0.01,LightEmission=1,LightInfluence=0,Color=ColorSequence.new(Color3.fromHex(S.AuraColor)),Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.08),NumberSequenceKeypoint.new(0.65,0.35),NumberSequenceKeypoint.new(1,1)}),WidthScale=NumberSequence.new({NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(1,0)})},a0)
+                            self.Orbits[#self.Orbits+1]={A0=a0,A1=a1,Trail=trail,Phase=index*math.pi*2/3,Root=root}
+                        end
+                    end
+                    if S.AuraNimb then
+                        local emitter=UI:New("ParticleEmitter",{Name="DeltaNimb",Texture="rbxasset://textures/particles/sparkles_main.dds",Color=ColorSequence.new(Color3.fromHex(S.AuraColor)),Rate=12,Lifetime=NumberRange.new(0.3,0.7),Speed=NumberRange.new(0.5,1),SpreadAngle=Vector2.new(180,180),LightEmission=1,Size=NumberSequence.new(0.25)},attachment(root,"Nimb",Vector3.new(0,2.8,0)))
+                        self.AuraEmitters[#self.AuraEmitters+1]=emitter
+                    end
+                end
             end
         end
+        if S.Trail then
+            for _,character in ipairs(self:Targets(S.TrailTarget)) do
+                local root=character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    local a0=attachment(root,"Trail0",Vector3.new(-S.TrailWidth/2,0,0.4))
+                    local a1=attachment(root,"Trail1",Vector3.new(S.TrailWidth/2,0,0.4))
+                    local trail=UI:New("Trail",{Name="DeltaTrail",Attachment0=a0,Attachment1=a1,Lifetime=S.TrailLifetime,MaxLength=S.TrailLength*2,FaceCamera=true,MinLength=0.05,LightEmission=S.TrailBrightness,Color=ColorSequence.new(Color3.fromHex(S.TrailColor)),Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.1),NumberSequenceKeypoint.new(1,1)}),WidthScale=NumberSequence.new({NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(1,0)})},a0)
+                    self.TrailObjects[#self.TrailObjects+1]=trail
+                    if S.TrailStyle~="Ribbon" then
+                        local emitter=UI:New("ParticleEmitter",{Name="DeltaTrailParticles",Texture=S.TrailStyle=="Smoke" and "rbxasset://textures/particles/smoke_main.dds" or "rbxasset://textures/particles/sparkles_main.dds",Color=ColorSequence.new(Color3.fromHex(S.TrailColor)),Rate=math.min(35*S.TrailDensity/100,self:Budget(55,90)),Lifetime=NumberRange.new(0.2,S.TrailLifetime+0.3),Speed=NumberRange.new(0,0.5),LightEmission=S.TrailBrightness,VelocityInheritance=S.TrailDrift/100,Size=NumberSequence.new({NumberSequenceKeypoint.new(0,S.TrailSize*0.08),NumberSequenceKeypoint.new(1,0)}),Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.2),NumberSequenceKeypoint.new(1,1)}),SpreadAngle=Vector2.new(S.TrailSpread*1.8,S.TrailSpread*1.8),Rotation=NumberRange.new(0,360),RotSpeed=NumberRange.new(-20,20),Enabled=S.TrailAlwaysOn},a0)
+                        if S.TrailStyle=="Snow" then
+                            emitter.Acceleration=Vector3.new(0,-1.3,0) emitter.Speed=NumberRange.new(0.15,0.8) emitter.RotSpeed=NumberRange.new(-60,60)
+                            emitter.Lifetime=NumberRange.new(0.4,S.TrailLifetime+0.8) emitter.Size=NumberSequence.new({NumberSequenceKeypoint.new(0,S.TrailSize*0.05),NumberSequenceKeypoint.new(0.6,S.TrailSize*0.07),NumberSequenceKeypoint.new(1,0)})
+                        elseif S.TrailStyle=="Stars" then
+                            emitter.Speed=NumberRange.new(0.3,1.8) emitter.RotSpeed=NumberRange.new(-5,5) emitter.LightEmission=1
+                            emitter.Size=NumberSequence.new({NumberSequenceKeypoint.new(0,0),NumberSequenceKeypoint.new(0.25,S.TrailSize*0.11),NumberSequenceKeypoint.new(1,0)})
+                        end
+                        self.TrailEmitters[#self.TrailEmitters+1]=emitter
+                        self.MotionTrails[#self.MotionTrails+1]={Emitter=emitter,Root=root,Last=root.Position}
+                    end
+                end
+            end
+        end
+        self.AuraEmitter=self.AuraEmitters[1] self.TrailObject=self.TrailObjects[1] self.TrailEmitter=self.TrailEmitters[1]
     end
+
     function FX:ScheduleCharacter()
         if self.PendingCharacter then return end
         self.PendingCharacter=true
@@ -731,14 +845,384 @@ local function start()
         if FX.FOVCamera and FX.OldFOV then pcall(function() FX.FOVCamera.FieldOfView=FX.OldFOV end) end
     end)
 
-    -- Configuration stores only validated values, never code.
+    -- Procedural video effects use owned, non-colliding geometry only.
+    FX.Random=Random.new()
+    FX.VideoFolder=UI:New("Folder",{Name="VideoEffects"},FX.Folder)
+    FX.Cosmetics,FX.Glyphs,FX.Circles,FX.DeathHooks,FX.EffectSounds={},{},{},{},{}
+    FX.Time,FX.FrameBudget,FX.DeathTimer=0,0,0
+    function FX:Budget(low,high)
+        local mobile=Input.TouchEnabled
+        return (App.State.Quality=="Low" or (App.State.Quality=="Auto" and mobile)) and low or high
+    end
+    function FX:Part(parent,name,size,color,material)
+        return UI:New("Part",{Name=name,Size=size,Color=color,Material=material or Enum.Material.Neon,Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,CastShadow=false},parent)
+    end
+    function FX:Model(parent,name)
+        local model=UI:New("Model",{Name=name},parent)
+        local origin=self:Part(model,"Origin",Vector3.new(0.01,0.01,0.01),C.White,Enum.Material.SmoothPlastic)
+        origin.Transparency=1 model.PrimaryPart=origin return model
+    end
+    function FX:Segment(parent,a,b,width,color,glow)
+        local delta=b-a
+        if delta.Magnitude<0.001 then return nil end
+        local part=self:Part(parent,"Line",Vector3.new(width,width,delta.Magnitude),color,glow==false and Enum.Material.SmoothPlastic or Enum.Material.Neon)
+        part.CFrame=CFrame.lookAt((a+b)*0.5,b) return part
+    end
+    function FX:Ring(parent,radius,count,color,width,y)
+        for index=1,count do
+            local a=(index-1)*math.pi*2/count local b=index*math.pi*2/count
+            self:Segment(parent,Vector3.new(math.cos(a)*radius,y or 0,math.sin(a)*radius),Vector3.new(math.cos(b)*radius,y or 0,math.sin(b)*radius),width,color)
+        end
+    end
+    function FX:Triangle(parent,a,b,c,color)
+        local ab,ac,bc=b-a,c-a,c-b
+        if ab.Magnitude>ac.Magnitude and ab.Magnitude>bc.Magnitude then c,a=a,c
+        elseif ac.Magnitude>bc.Magnitude and ac.Magnitude>ab.Magnitude then a,b=b,a end
+        ab,ac,bc=b-a,c-a,c-b
+        local normal=ac:Cross(ab)
+        if normal.Magnitude<0.0001 or bc.Magnitude<0.0001 then return end
+        local right,back=normal.Unit,bc.Unit local up=back:Cross(right).Unit
+        local height=math.abs(ab:Dot(up))
+        for _,spec in ipairs({{(a+b)*0.5,right,back,math.abs(ab:Dot(back))},{(a+c)*0.5,-right,-back,math.abs(ac:Dot(back))}}) do
+            if spec[4]>0.001 then
+                UI:New("WedgePart",{Name="ConeFace",Size=Vector3.new(0.025,height,spec[4]),CFrame=CFrame.fromMatrix(spec[1],spec[2],up,spec[3]),Color=color,Material=Enum.Material.SmoothPlastic,Anchored=true,CanCollide=false,CanTouch=false,CanQuery=false,CastShadow=false},parent)
+            end
+        end
+    end
+    function FX:Hat(parent,color)
+        local model=self:Model(parent,"KonchalHat")
+        model:SetAttribute("DesignSize",App.State.HatSize) model:SetAttribute("Segments",self:Budget(14,20))
+        local count=self:Budget(14,20) local radius=App.State.HatSize*0.5
+        local tip=Vector3.new(0,App.State.HatSize*0.12,0)
+        for index=1,count do
+            local a=(index-1)*math.pi*2/count local b=index*math.pi*2/count
+            self:Triangle(model,tip,Vector3.new(math.cos(a)*radius,0,math.sin(a)*radius),Vector3.new(math.cos(b)*radius,0,math.sin(b)*radius),color)
+        end
+        return model
+    end
+    function FX:Halo(parent,color)
+        local model=self:Model(parent,"OrbitHalo") local radius=App.State.HaloRadius
+        model:SetAttribute("DesignSize",radius) model:SetAttribute("Segments",self:Budget(20,32))
+        self:Ring(model,radius,self:Budget(20,32),color,0.035,0)
+        self:Ring(model,radius*0.86,self:Budget(16,26),color,0.025,0.04)
+        for index=1,6 do
+            local theta=index*math.pi/3
+            local inside=Vector3.new(math.cos(theta)*radius*0.97,0,math.sin(theta)*radius*0.97)
+            local outside=Vector3.new(math.cos(theta)*radius*1.2,0,math.sin(theta)*radius*1.2)
+            self:Segment(model,inside,outside,0.035,color)
+        end
+        return model
+    end
+    function FX:ClearVideo()
+        self.VideoFolder:ClearAllChildren()
+        self.Cosmetics,self.Glyphs,self.Circles={},{},{} self.AmbientEmitter,self.AmbientPart=nil,nil
+        self.NextCircle=nil
+    end
+    function FX:BuildVideo()
+        self:ClearVideo()
+        local S=App.State
+        if S.Hat or S.Halo then
+            local targets=self:Targets(S.CosmeticTarget)
+            for _,character in ipairs(targets) do
+                local head=character:FindFirstChild("Head")
+                if head then
+                    if S.Hat then local model=self:Hat(self.VideoFolder,Color3.fromHex(S.HatColor)) model:PivotTo(head.CFrame*CFrame.new(0,S.HatHeight,0)) self.Cosmetics[#self.Cosmetics+1]={Model=model,Head=head,Kind="Hat"} end
+                    if S.Halo then local model=self:Halo(self.VideoFolder,Color3.fromHex(S.HaloColor)) model:PivotTo(head.CFrame*CFrame.new(0,S.HaloHeight,0)*CFrame.Angles(math.rad(S.HaloTilt),0,0)) self.Cosmetics[#self.Cosmetics+1]={Model=model,Head=head,Kind="Halo"} end
+                end
+            end
+        end
+        if S.Glyphs then
+            local count=math.min(math.floor(S.GlyphCount),self:Budget(14,32))
+            for index=1,count do
+                local model=self:Model(self.VideoFolder,"Constellation")
+                local points={}
+                local size=self.Random:NextNumber(1.6,4.7)
+                for point=1,5 do points[point]=Vector3.new(self.Random:NextNumber(-size,size),self.Random:NextNumber(-size,size),self.Random:NextNumber(-size*0.2,size*0.2)) end
+                local lines={}
+                for point=1,4 do
+                    local part=self:Segment(model,points[point],points[point+1],S.GlyphWidth*0.014,Color3.fromHex(S.GlyphColor),S.GlyphGlow)
+                    if part then lines[#lines+1]=part end
+                end
+                if index%3==0 then local part=self:Segment(model,points[1],points[4],S.GlyphWidth*0.01,Color3.fromHex(S.GlyphColor),S.GlyphGlow) if part then lines[#lines+1]=part end end
+                local offset=Vector3.new(self.Random:NextNumber(-65,65),self.Random:NextNumber(-5,32),self.Random:NextNumber(-90,-18))
+                if workspace.CurrentCamera then model:PivotTo(workspace.CurrentCamera.CFrame*CFrame.new(offset)) end
+                self.Glyphs[#self.Glyphs+1]={Model=model,Lines=lines,Offset=offset,Phase=self.Random:NextNumber(0,math.pi*2)}
+            end
+        end
+        if S.AmbientParticles then
+            self.AmbientPart=self:Part(self.VideoFolder,"CameraParticles",Vector3.new(65,35,55),C.White) self.AmbientPart.Transparency=1
+            if workspace.CurrentCamera then self.AmbientPart.CFrame=workspace.CurrentCamera.CFrame*CFrame.new(0,0,-25) end
+            self.AmbientEmitter=UI:New("ParticleEmitter",{Name="AmbientParticles",Texture="rbxasset://textures/particles/sparkles_main.dds",Color=ColorSequence.new(Color3.fromHex(S.AmbientColor)),Rate=math.min(S.AmbientRate,self:Budget(45,80)),Lifetime=NumberRange.new(1.5,4),Speed=NumberRange.new(0.1,0.5),SpreadAngle=Vector2.new(180,180),Size=NumberSequence.new(0.16),Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(0.15,0.55),NumberSequenceKeypoint.new(0.85,0.6),NumberSequenceKeypoint.new(1,1)}),LightEmission=0.7,RotSpeed=NumberRange.new(-20,20)},self.AmbientPart)
+        end
+        UI:RefreshPreviewCosmetics()
+    end
+    function FX:ScheduleVideo()
+        if self.PendingVideo then return end self.PendingVideo=true
+        task.delay(0.1,function() self.PendingVideo=false if App.Active then self:BuildVideo() end end)
+    end
+    function FX:CircleModel(parent,color)
+        local model=self:Model(parent,"GroundCircle") local radius=App.State.CircleSize/2
+        self:Ring(model,radius,self:Budget(24,40),color,0.025,0)
+        self:Ring(model,radius*0.83,self:Budget(20,32),color,0.018,0)
+        if App.State.CircleStyle~="Orbit" then
+            local points={}
+            for index=1,5 do local angle=index*math.pi*2/5 points[index]=Vector3.new(math.cos(angle)*radius*0.74,0,math.sin(angle)*radius*0.74) end
+            for index=1,5 do self:Segment(model,points[index],points[(index+1)%5+1],0.023,color) end
+        end
+        return model
+    end
+    function FX:TestCircle()
+        local targets=self:Targets(App.State.CircleTarget)
+        for _,character in ipairs(targets) do
+            local root=character:FindFirstChild("HumanoidRootPart")
+            if root then
+                while #self.Circles>=self:Budget(2,4) do local old=table.remove(self.Circles,1) old.Model:Destroy() end
+                local params=RaycastParams.new() params.FilterType=Enum.RaycastFilterType.Exclude params.FilterDescendantsInstances={character,self.Folder} params.IgnoreWater=true
+                local hit=workspace:Raycast(root.Position,Vector3.new(0,-25,0),params)
+                local point=hit and hit.Position or (root.Position-Vector3.new(0,3,0))
+                local normal=hit and hit.Normal or Vector3.new(0,1,0)
+                local right=normal:Cross(Vector3.new(0,0,1)) if right.Magnitude<0.01 then right=Vector3.new(1,0,0) else right=right.Unit end
+                local place=CFrame.fromMatrix(point+normal*0.045,right,normal,right:Cross(normal))
+                local model=self:CircleModel(self.VideoFolder,Color3.fromHex(App.State.CircleColor)) model:PivotTo(place)
+                self.Circles[#self.Circles+1]={Model=model,Place=place,Start=self.Time,Life=App.State.CircleLife,Parts=model:GetDescendants()}
+            end
+        end
+    end
+    function UI:RefreshPreviewCosmetics()
+        if not self.PreviewModel then return end
+        local head=self.PreviewModel:FindFirstChild("Head") if not head then return end
+        local folder=self.PreviewModel:FindFirstChild("DeltaPreviewCosmetics")
+        if not folder then folder=self:New("Folder",{Name="DeltaPreviewCosmetics"},self.PreviewModel) end
+        local S=App.State
+        for _,kind in ipairs({"Hat","Halo"}) do
+            local name=kind=="Hat" and "KonchalHat" or "OrbitHalo"
+            local model=folder:FindFirstChild(name)
+            local segments=kind=="Hat" and FX:Budget(14,20) or FX:Budget(20,32)
+            if model and (not S[kind] or model:GetAttribute("Segments")~=segments) then model:Destroy() model=nil end
+            if S[kind] then
+                local color=S.Silhouette and C.White or Color3.fromHex(S[kind.."Color"])
+                if not model then model=kind=="Hat" and FX:Hat(folder,color) or FX:Halo(folder,color) end
+                local size=kind=="Hat" and S.HatSize or S.HaloRadius
+                model:ScaleTo(size/model:GetAttribute("DesignSize"))
+                for _,part in ipairs(model:GetDescendants()) do if part:IsA("BasePart") and part.Name~="Origin" then part.Color=color end end
+                local height=kind=="Hat" and S.HatHeight or S.HaloHeight
+                local tilt=kind=="Halo" and math.rad(S.HaloTilt) or 0
+                model:PivotTo(head.CFrame*CFrame.new(0,height,0)*CFrame.Angles(tilt,0,0))
+            end
+        end
+        local box,size=self.PreviewModel:GetBoundingBox() self.PreviewBox,self.PreviewSize=box.Position,size self:FramePreview()
+    end
+    function FX:UpdateVideoValues(key)
+        local S=App.State
+        if key:match("^Hat") or key:match("^Halo") then
+            if key=="Hat" or key=="Halo" then return false end
+            for _,record in ipairs(self.Cosmetics) do
+                local size=record.Kind=="Hat" and S.HatSize or S.HaloRadius
+                record.Model:ScaleTo(size/record.Model:GetAttribute("DesignSize"))
+                local color=Color3.fromHex(S[record.Kind.."Color"])
+                for _,part in ipairs(record.Model:GetDescendants()) do if part:IsA("BasePart") and part.Name~="Origin" then part.Color=color end end
+            end
+            UI:RefreshPreviewCosmetics() return true
+        elseif key:match("^Glyph") then
+            if key=="Glyphs" then return false end
+            if key=="GlyphCount" then return #self.Glyphs==math.min(math.floor(S.GlyphCount),self:Budget(14,32)) end
+            for _,glyph in ipairs(self.Glyphs) do
+                for _,part in ipairs(glyph.Lines) do
+                    if key=="GlyphColor" or key=="GlyphColorMode" then part.Color=Color3.fromHex(S.GlyphColor)
+                    elseif key=="GlyphWidth" then part.Size=Vector3.new(S.GlyphWidth*0.014,S.GlyphWidth*0.014,part.Size.Z)
+                    elseif key=="GlyphGlow" then part.Material=S.GlyphGlow and Enum.Material.Neon or Enum.Material.SmoothPlastic end
+                end
+            end return true
+        elseif key=="AmbientColor" or key=="AmbientRate" then
+            if self.AmbientEmitter then self.AmbientEmitter.Color=ColorSequence.new(Color3.fromHex(S.AmbientColor)) self.AmbientEmitter.Rate=math.min(S.AmbientRate,self:Budget(45,80)) end return true
+        elseif key:match("^Circle") and key~="Circle" and key~="CircleSize" and key~="CircleStyle" and key~="CircleTarget" then
+            for _,pulse in ipairs(self.Circles) do
+                if key=="CircleLife" then pulse.Life=S.CircleLife end
+                if key=="CircleColor" then for _,part in ipairs(pulse.Parts) do if part:IsA("BasePart") and part.Name~="Origin" then part.Color=Color3.fromHex(S.CircleColor) end end end
+            end return true
+        end
+        return false
+    end
+    function FX:EffectSound(id)
+        if id=="" then return end
+        while #self.EffectSounds>=4 do local old=table.remove(self.EffectSounds,1) old:Destroy() end
+        local sound=UI:New("Sound",{Name="DeltaEffectSound",SoundId="rbxassetid://"..id,Volume=App.State.EffectVolume},SoundService)
+        self.EffectSounds[#self.EffectSounds+1]=sound sound:Play()
+        task.delay(6,function() if sound.Parent then sound:Destroy() end for index=#self.EffectSounds,1,-1 do if self.EffectSounds[index]==sound then table.remove(self.EffectSounds,index) end end end)
+    end
+    function FX:DeathPulse(character)
+        local root=character and character:FindFirstChild("HumanoidRootPart") if not root then return end
+        local color=Color3.fromHex(App.State.NeonColor)
+        if App.State.KillChams then
+            local highlight=UI:New("Highlight",{Name="DeathChams",Adornee=character,FillColor=color,OutlineColor=color,FillTransparency=0.15,OutlineTransparency=0},self.VideoFolder)
+            UI:Tween(highlight,{FillTransparency=1,OutlineTransparency=1},0.9)
+            task.delay(1,function() if highlight.Parent then highlight:Destroy() end end)
+        end
+        if App.State.NeonBurst then
+            local sphere=self:Part(self.VideoFolder,"NeonBurst",Vector3.new(0.2,0.2,0.2),color)
+            sphere.Shape=Enum.PartType.Ball sphere.CFrame=CFrame.new(root.Position) sphere.Transparency=0.3
+            UI:Tween(sphere,{Size=Vector3.new(10,10,10),Transparency=1},0.7)
+            task.delay(0.8,function() if sphere.Parent then sphere:Destroy() end end)
+        end
+    end
+    function FX:ClearDeathHooks()
+        for _,record in pairs(self.DeathHooks) do record.Died:Disconnect() record.Health:Disconnect() end self.DeathHooks={}
+    end
+    function FX:RefreshDeathHooks()
+        local S=App.State
+        if not S.KillChams and not S.NeonBurst and not S.HitSound and not S.KillSound then self:ClearDeathHooks() return end
+        local present={}
+        for _,other in ipairs(Players:GetPlayers()) do
+            local character=other.Character local humanoid=character and character:FindFirstChildOfClass("Humanoid")
+            local wanted=(S.KillTarget=="Self" and other==player) or (S.KillTarget=="Others" and other~=player)
+            if humanoid and wanted then
+                present[other]=true
+                local old=self.DeathHooks[other]
+                if old and old.Humanoid~=humanoid then old.Died:Disconnect() old.Health:Disconnect() self.DeathHooks[other]=nil old=nil end
+                if not old then
+                    local record={Humanoid=humanoid,LastHealth=humanoid.Health}
+                    record.Died=humanoid.Died:Connect(function() if App.Active then self:DeathPulse(character) if App.State.KillSound then self:EffectSound(App.State.KillSoundId) end end end)
+                    record.Health=humanoid.HealthChanged:Connect(function(health) if App.Active and health<record.LastHealth and health>0 and App.State.HitSound then self:EffectSound(App.State.HitSoundId) end record.LastHealth=health end)
+                    self.DeathHooks[other]=record
+                end
+            end
+        end
+        local remove={}
+        for other,record in pairs(self.DeathHooks) do if not present[other] then record.Died:Disconnect() record.Health:Disconnect() remove[#remove+1]=other end end
+        for _,other in ipairs(remove) do self.DeathHooks[other]=nil end
+    end
+    function FX:RefreshTargetSet()
+        local roots={}
+        local function add(enabled,mode)
+            if not enabled then return end
+            for _,character in ipairs(self:Targets(mode)) do local root=character:FindFirstChild("HumanoidRootPart") if root then roots[root]=true end end
+        end
+        add(App.State.Aura,App.State.AuraTarget) add(App.State.Trail,App.State.TrailTarget) add(App.State.Hat or App.State.Halo,App.State.CosmeticTarget)
+        local changed=false
+        if self.TargetSnapshot then
+            for root in pairs(roots) do if not self.TargetSnapshot[root] then changed=true break end end
+            if not changed then for root in pairs(self.TargetSnapshot) do if not roots[root] then changed=true break end end end
+        end
+        self.TargetSnapshot=roots
+        if changed then self:Character() self:BuildVideo() end
+    end
+    function FX:VideoStep(dt)
+        self.Time=self.Time+dt self.FrameBudget=self.FrameBudget+dt self.DeathTimer=self.DeathTimer+dt
+        if self.DeathTimer>=1 then self.DeathTimer=0 self:RefreshDeathHooks() self:RefreshTargetSet() end
+        if self.FrameBudget<1/30 then return end
+        self.FrameBudget=0
+        local S=App.State local t=self.Time
+        for _,orbit in ipairs(self.Orbits or {}) do
+            if orbit.Root.Parent then
+                local angle=t*S.AuraSpeed+orbit.Phase local radius=S.AuraRadius
+                local y=math.sin(angle*0.7+orbit.Phase)*1.3
+                local point=Vector3.new(math.cos(angle)*radius,y,math.sin(angle)*radius)
+                orbit.A0.Position=point+Vector3.new(0,S.AuraSize*0.3,0) orbit.A1.Position=point-Vector3.new(0,S.AuraSize*0.3,0)
+            end
+        end
+        for _,motion in ipairs(self.MotionTrails or {}) do
+            if motion.Root.Parent then
+                local moved=(motion.Root.Position-motion.Last).Magnitude>0.025 motion.Last=motion.Root.Position
+                motion.Emitter.Enabled=S.TrailAlwaysOn or moved
+            end
+        end
+        for _,cosmetic in ipairs(self.Cosmetics) do
+            if cosmetic.Head.Parent then
+                local offset=cosmetic.Kind=="Hat" and S.HatHeight or S.HaloHeight
+                local spin=cosmetic.Kind=="Hat" and S.HatSpin or S.HaloSpin
+                local tilt=cosmetic.Kind=="Halo" and math.rad(S.HaloTilt) or 0
+                cosmetic.Model:PivotTo(cosmetic.Head.CFrame*CFrame.new(0,offset,0)*CFrame.Angles(tilt,t*math.rad(spin),0))
+            end
+        end
+        local camera=workspace.CurrentCamera
+        if camera then
+            for _,glyph in ipairs(self.Glyphs) do
+                local point=glyph.Offset+Vector3.new(math.sin(t*0.08+glyph.Phase)*2,math.sin(t*0.12+glyph.Phase)*2,0)
+                glyph.Model:PivotTo(camera.CFrame*CFrame.new(point)*CFrame.Angles(0,0,math.sin(t*S.GlyphSpeed*0.001+glyph.Phase)*0.2))
+                local cycle=(t/S.GlyphLifetime+glyph.Phase)%1 local fade=0.35+math.abs(cycle-0.5)*0.9
+                for _,part in ipairs(glyph.Lines) do part.Transparency=math.clamp(fade+S.GlyphTrail/300,0,0.95) if S.GlyphColorMode=="Rainbow" then part.Color=Color3.fromHSV((t*0.08+glyph.Phase/7)%1,0.4,1) end end
+            end
+            if self.AmbientPart then self.AmbientPart.CFrame=camera.CFrame*CFrame.new(0,0,-25) end
+        end
+        if S.Circle and (not self.NextCircle or t>=self.NextCircle) then self:TestCircle() self.NextCircle=t+math.max(0.6,S.CircleLife*0.7) end
+        for index=#self.Circles,1,-1 do
+            local pulse=self.Circles[index] local age=(t-pulse.Start)/pulse.Life
+            if age>=1 then pulse.Model:Destroy() table.remove(self.Circles,index)
+            else
+                pulse.Model:ScaleTo(1+(S.CircleGrow/100-1)*age)
+                pulse.Model:PivotTo(pulse.Place*CFrame.Angles(0,math.rad(S.CircleSpin)*(t-pulse.Start),0))
+                for _,part in ipairs(pulse.Parts) do if part:IsA("BasePart") and part.Name~="Origin" then part.Transparency=math.clamp(1-S.CircleBrightness+age^3*S.CircleBrightness,0,1) end end
+            end
+        end
+        UI:WireStep(t)
+    end
+    function UI:Wireframe(card)
+        local row=self:Row(card,"Geometry",158)
+        local frame=self:New("Frame",{Name="AnimatedGeometry",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,ClipsDescendants=true},row)
+        local vertices={Vector3.new(0,1.2,0),Vector3.new(0,-1.2,0),Vector3.new(-0.8,0,0),Vector3.new(0.8,0,0),Vector3.new(0,0,-0.8),Vector3.new(0,0,0.8)}
+        local edges={{1,3},{1,4},{1,5},{1,6},{2,3},{2,4},{2,5},{2,6},{3,5},{5,4},{4,6},{6,3},{1,2},{3,4}}
+        local lines={} for _,edge in ipairs(edges) do local line=self:Line(frame,0,0,1,1,C.Muted) line.BackgroundTransparency=0.45 lines[#lines+1]={Frame=line,A=edge[1],B=edge[2]} end
+        self.Wire={Frame=frame,Vertices=vertices,Lines=lines}
+    end
+    function UI:WireStep(t)
+        if not self.Wire or not self.Visible or self.Selected~="Menu" then return end
+        local width=self.Wire.Frame.AbsoluteSize.X/math.max(self.Scale,0.1) local height=158 local points={}
+        for index,v in ipairs(self.Wire.Vertices) do
+            local angle=t*0.3 local x=v.X*math.cos(angle)-v.Z*math.sin(angle) local z=v.X*math.sin(angle)+v.Z*math.cos(angle)
+            local perspective=1/(1+z*0.15) points[index]=Vector2.new(width/2+x*52*perspective,height/2+v.Y*50*perspective)
+        end
+        for _,line in ipairs(self.Wire.Lines) do local a,b=points[line.A],points[line.B] local delta=b-a line.Frame.Position=UDim2.fromOffset((a.X+b.X)/2,(a.Y+b.Y)/2) line.Frame.Size=UDim2.fromOffset(delta.Magnitude,1) line.Frame.Rotation=math.deg(math.atan2(delta.Y,delta.X)) end
+    end
+    function App:VideoLook(name)
+        local violet=name=="Violet" local crimson=name=="Crimson"
+        local color=violet and "C59CFF" or (crimson and "FF6B88" or "A9D6FF")
+        local settings={Preset=crimson and "Crimson" or "Night",Celestial="Stars",Stars=3000,Bloom=true,BloomIntensity=0.5,ColorGrade=true,Ambient=true,Aura=true,AuraAmbient=true,AuraAngelic=true,AuraNimb=false,AuraStyle="Angelic",AuraColor=color,AuraGlow=1,AuraSize=1.5,AuraRate=55,AuraRadius=1.5,AuraSpeed=2.8,Trail=true,TrailStyle="Sparkle",TrailColor=color,TrailDensity=140,Halo=true,HaloColor=color,Hat=true,HatColor="E6E9EF",Glyphs=true,GlyphColor=color,GlyphCount=26,AmbientParticles=true,AmbientColor=color,AmbientRate=25,Circle=false}
+        for key,value in pairs(settings) do self:Set(key,value,true) end
+        self:ApplyAll() UI:Toast("Visual "..name.." aplicado")
+    end
+    App:AddCleanup(function() FX:ClearDeathHooks() for _,sound in ipairs(FX.EffectSounds) do sound:Destroy() end FX.EffectSounds={} FX:ClearVideo() end)
+
+    -- Only this project's validated JSON configuration files are listed or read.
     local configName="default"
-    local function fileFunction(name) local fn=environment[name] if type(fn)~="function" then if name=="writefile" then fn=writefile elseif name=="readfile" then fn=readfile end end return type(fn)=="function" and fn or nil end
-    function App:ConfigPath() return "delta-project-"..configName..".json" end
+    local fileBuiltins={writefile=writefile,readfile=readfile,listfiles=listfiles,delfile=delfile,setclipboard=setclipboard}
+    local function fileFunction(name) local fn=environment[name] or fileBuiltins[name] return type(fn)=="function" and fn or nil end
+    local function configLabel(value) local clean=tostring(value):gsub("[^%w_-]",""):sub(1,32) return clean~="" and clean or "default" end
+    App.ConfigNames,App.RemovedConfigs={},{}
+    function App:ConfigPath(name) return "delta-project-"..configLabel(name or configName)..".json" end
+    function App:SetConfigName(name)
+        configName=configLabel(name) if UI.ConfigName then UI.ConfigName.Text=configName end
+    end
+    function App:ListConfigs()
+        local reader,lister=fileFunction("readfile"),fileFunction("listfiles")
+        if reader then
+            local ok,data=pcall(function() return HttpService:JSONDecode(reader("delta-project.config-index.json")) end)
+            if ok and type(data)=="table" and type(data.names)=="table" then
+                for _,name in ipairs(data.names) do if type(name)=="string" and configLabel(name)==name and not self.RemovedConfigs[name] then self.ConfigNames[name]=true end end
+            end
+        end
+        if lister then
+            local ok,paths=pcall(lister,".")
+            if ok and type(paths)=="table" then for _,path in ipairs(paths) do
+                if type(path)=="string" then local name=path:gsub("\\","/"):match("delta%-project%-([%w_-]+)%.json$") if name and #name<=32 and not self.RemovedConfigs[name] then self.ConfigNames[name]=true end end
+            end end
+        end
+        local names={} for name in pairs(self.ConfigNames) do if not self.RemovedConfigs[name] then names[#names+1]=name end end table.sort(names) return names
+    end
+    function App:SaveConfigIndex()
+        local writer=fileFunction("writefile") if not writer then return end
+        local names={} for name in pairs(self.ConfigNames) do if not self.RemovedConfigs[name] then names[#names+1]=name end end table.sort(names)
+        pcall(function() writer("delta-project.config-index.json",HttpService:JSONEncode({names=names})) end)
+    end
+    function UI:RefreshConfigList()
+        if not self.ConfigItems then return end
+        self.ConfigItems:ClearAllChildren() self:New("UIListLayout",{Padding=UDim.new(0,2),SortOrder=Enum.SortOrder.LayoutOrder},self.ConfigItems)
+        for index,name in ipairs(App:ListConfigs()) do self:Click(self.ConfigItems,name,function() App:SetConfigName(name) self:RefreshConfigList() end,{Size=UDim2.new(1,-4,0,25),LayoutOrder=index,BackgroundTransparency=name==configName and 0 or 1,TextXAlignment=Enum.TextXAlignment.Left}) end
+    end
     function App:SaveConfig()
         local writer=fileFunction("writefile")
         if not writer then UI:Toast("Salvar arquivo nao esta disponivel neste ambiente") return false end
-        local ok=pcall(writer,self:ConfigPath(),HttpService:JSONEncode({version=1,settings=self.State}))
+        local ok=pcall(function() writer(self:ConfigPath(),HttpService:JSONEncode({version=1,settings=self.State})) end)
+        if ok then self.ConfigNames[configName]=true self.RemovedConfigs[configName]=nil self:SaveConfigIndex() UI:RefreshConfigList() end
         UI:Toast(ok and "Configuracao salva" or "Nao foi possivel salvar a configuracao") return ok
     end
     function App:LoadConfig()
@@ -746,27 +1230,50 @@ local function start()
         if not reader then UI:Toast("Ler arquivo nao esta disponivel neste ambiente") return false end
         local ok,data=pcall(function() return HttpService:JSONDecode(reader(self:ConfigPath())) end)
         if not ok or type(data)~="table" or data.version~=1 or type(data.settings)~="table" then UI:Toast("Configuracao ausente ou invalida") return false end
+        for key,value in pairs(defaults) do self:Set(key,value,true) end
         for key,value in pairs(data.settings) do self:Set(key,value,true) end
+        if data.settings.AuraAngelic==nil and (self.State.AuraStyle=="Angelic" or self.State.AuraStyle=="Vortex") then self:Set("AuraAngelic",true,true) end
         self:ApplyAll() UI:Toast("Configuracao carregada") return true
     end
+    function App:DeleteConfig()
+        local deleter=fileFunction("delfile") if not deleter then UI:Toast("Excluir arquivo nao esta disponivel neste ambiente") return false end
+        local ok=pcall(deleter,self:ConfigPath())
+        if ok then self.ConfigNames[configName]=nil self.RemovedConfigs[configName]=true self:SaveConfigIndex() UI:RefreshConfigList() end
+        UI:Toast(ok and "Configuracao excluida" or "Nao foi possivel excluir a configuracao") return ok
+    end
+    function App:CopyConfig()
+        local clipboard=fileFunction("setclipboard") if not clipboard then UI:Toast("Copiar nao esta disponivel neste ambiente") return false end
+        local ok=pcall(function() clipboard(HttpService:JSONEncode({version=1,settings=self.State})) end)
+        UI:Toast(ok and "Configuracao copiada" or "Nao foi possivel copiar") return ok
+    end
     function App:Reset()
-        for key,value in pairs(defaults) do self:Set(key,value,true) end self:ApplyAll() UI:Toast("Configuracao restaurada")
+        for key,value in pairs(defaults) do self:Set(key,value,true) end self:ApplyAll() FX.Sound:Stop() for _,sound in ipairs(FX.EffectSounds) do sound:Destroy() end FX.EffectSounds={} UI:Toast("Configuracao restaurada")
     end
 
     -- Pages use the same two-column, compact section layout as the references.
     do
         local left,right=UI:Page("World")
         local card=UI:Card(left,"Shaders")
-        UI:Dropdown(card,"Preset","Preset") UI:Dropdown(card,"Celestial","Celestial") UI:Slider(card,"Stars","Stars",100)
+        UI:Dropdown(card,"Preset","Preset") UI:Dropdown(card,"Skybox","Skybox") UI:Dropdown(card,"Celestial","Celestial") UI:Slider(card,"Stars","Stars",100)
         UI:Toggle(card,"Fog","Fog") UI:Slider(card,"Fog distance","FogDistance",10,nil,"Fog")
         UI:Toggle(card,"Bloom","Bloom") UI:Slider(card,"Intensity","BloomIntensity",0.05,nil,"Bloom")
         UI:Toggle(card,"Sun Rays","SunRays") UI:Toggle(card,"Blur","Blur") UI:Slider(card,"Blur size","BlurSize",1,nil,"Blur")
         UI:Toggle(card,"Color Grade","ColorGrade") UI:Toggle(card,"Atmosphere","Atmosphere") UI:Slider(card,"Density","AtmosphereDensity",0.05,nil,"Atmosphere")
-        card=UI:Card(left,"Aura") UI:Toggle(card,"Aura","Aura") UI:Dropdown(card,"Types","AuraStyle") UI:Slider(card,"Glow","AuraGlow",0.05) UI:Slider(card,"Rate","AuraRate",1) UI:Slider(card,"Size","AuraSize",0.1) UI:Color(card,"Color","AuraColor")
-        card=UI:Card(left,"Trail") UI:Toggle(card,"Enabled","Trail") UI:Dropdown(card,"Style","TrailStyle") UI:Color(card,"Fade Color","TrailColor") UI:Toggle(card,"Rainbow","Rainbow") UI:Slider(card,"Width","TrailWidth",0.1) UI:Slider(card,"Lifetime","TrailLifetime",0.1,"s") UI:Slider(card,"Brightness","TrailBrightness",0.05)
-        card=UI:Card(right,"Aura settings") UI:Color(card,"Color","AuraColor") UI:Dropdown(card,"Style","AuraStyle") UI:Slider(card,"Size","AuraSize",0.1) UI:Slider(card,"Life","AuraLifetime",0.1,"s") UI:Slider(card,"Grow","AuraGrow",5,"%") UI:Slider(card,"Brightness","AuraGlow",0.05) UI:Slider(card,"Spin","AuraSpin",5) UI:Toggle(card,"Rainbow","Rainbow")
+        card=UI:Card(left,"Aura") UI:Toggle(card,"Aura","Aura")
+        UI:MultiSelect(card,"Types",{{"Angelic","AuraAngelic"},{"Ambient","AuraAmbient"},{"Nimb","AuraNimb"}})
+        UI:Dropdown(card,"Target","AuraTarget") UI:Slider(card,"Glow","AuraGlow",0.05,"%",nil,100) UI:Slider(card,"Rate","AuraRate",1) UI:Slider(card,"Size","AuraSize",0.1) UI:Color(card,"Color","AuraColor")
+        card=UI:Card(left,"Kill Effects") UI:Toggle(card,"Chams","KillChams") UI:Toggle(card,"Neon Burst","NeonBurst") UI:Dropdown(card,"Target","KillTarget") UI:Color(card,"Color","NeonColor") UI:Button(card,"Test burst",function() FX:DeathPulse(player.Character) end)
+        card=UI:Card(left,"Trail") UI:Toggle(card,"Enabled","Trail") UI:Dropdown(card,"Style","TrailStyle") UI:Dropdown(card,"Target","TrailTarget") UI:Color(card,"Fade Color","TrailColor") UI:Toggle(card,"Rainbow","Rainbow") UI:Slider(card,"Size","TrailSize",0.5) UI:Slider(card,"Length","TrailLength",1) UI:Slider(card,"Density","TrailDensity",5,"%") UI:Slider(card,"Brightness","TrailBrightness",0.05,"%",nil,100) UI:Slider(card,"Spread","TrailSpread",1,"%") UI:Slider(card,"Drift","TrailDrift",1,"%") UI:Slider(card,"Width","TrailWidth",0.1) UI:Slider(card,"Lifetime","TrailLifetime",0.1,"s") UI:Toggle(card,"Always On","TrailAlwaysOn")
+        card=UI:Card(right,"Circle") UI:Toggle(card,"Enabled","Circle") UI:Dropdown(card,"Style","CircleStyle") UI:Slider(card,"Size","CircleSize",0.5) UI:Slider(card,"Life","CircleLife",0.5,"s") UI:Slider(card,"Grow","CircleGrow",5,"%") UI:Slider(card,"Brightness","CircleBrightness",0.05,"%",nil,100) UI:Slider(card,"Spin","CircleSpin",5) UI:Dropdown(card,"Target","CircleTarget") UI:Color(card,"Color","CircleColor") UI:Button(card,"Test Circle",function() FX:TestCircle() end)
+        card=UI:Card(right,"Line Glyphs") UI:Toggle(card,"Enabled","Glyphs") UI:Dropdown(card,"Color","GlyphColorMode") UI:Color(card,"Tint","GlyphColor") UI:Slider(card,"Count","GlyphCount",1) UI:Slider(card,"Speed","GlyphSpeed",1) UI:Slider(card,"Trail","GlyphTrail",1) UI:Slider(card,"Lifetime","GlyphLifetime",0.1,"s") UI:Slider(card,"Width","GlyphWidth",0.1) UI:Toggle(card,"Glow","GlyphGlow")
+        card=UI:Card(right,"Aura settings") UI:Color(card,"Color","AuraColor") UI:Dropdown(card,"Style","AuraStyle") UI:Slider(card,"Life","AuraLifetime",0.1,"s") UI:Slider(card,"Grow","AuraGrow",5,"%") UI:Slider(card,"Orbit radius","AuraRadius",0.1) UI:Slider(card,"Orbit speed","AuraSpeed",0.1) UI:Slider(card,"Spin","AuraSpin",5)
+        card=UI:Card(right,"Sounds") UI:Toggle(card,"Hit Sound","HitSound") UI:IdField(card,"Hit audio ID","HitSoundId") UI:Condition(card,"HitSound",true) UI:Toggle(card,"Kill Sound","KillSound") UI:IdField(card,"Kill audio ID","KillSoundId") UI:Condition(card,"KillSound",true) UI:Slider(card,"Sound Volume","EffectVolume",0.05,"%",nil,100)
         card=UI:Card(right,"Lighting") UI:Toggle(card,"Fullbright","Fullbright") UI:Toggle(card,"Time Change","TimeChange") UI:Slider(card,"Time","ClockTime",0.5,"h") UI:Toggle(card,"Ambient","Ambient") UI:Toggle(card,"Exposure","Exposure") UI:Slider(card,"Value","ExposureValue",0.1)
-        card=UI:Card(right,"Preview") UI:Toggle(card,"Show preview","Preview") UI:Toggle(card,"Silhouette","Silhouette") UI:Toggle(card,"Auto rotate","PreviewSpin") UI:Slider(card,"Spin","PreviewSpeed",1) UI:Button(card,"Refresh avatar",function() UI:RefreshPreview() end)
+        card=UI:Card(left,"Video looks") UI:Button(card,"Apply Blue look",function() App:VideoLook("Blue") end) UI:Button(card,"Apply Violet look",function() App:VideoLook("Violet") end) UI:Button(card,"Apply Crimson lighting",function() App:VideoLook("Crimson") end)
+        card=UI:Card(right,"Skybox assets")
+        for _,entry in ipairs({{"Back","SkyBackId"},{"Down","SkyDownId"},{"Front","SkyFrontId"},{"Left","SkyLeftId"},{"Right","SkyRightId"},{"Up","SkyUpId"}}) do
+            local key=entry[2] local box=UI:Textbox(card,entry[1].." ID","",function(value) App:Set(key,value) end) UI:Condition(card,"Skybox","Custom") App:Subscribe(key,function(value) box.Text=value end)
+        end
     end
     do
         local left,right=UI:Page("ESP")
@@ -778,6 +1285,7 @@ local function start()
         local card=UI:Card(left,"Camera") UI:Toggle(card,"Custom FOV","FOVEnabled") UI:Slider(card,"Field of view","FOV",1,"°")
         card=UI:Card(right,"Crosshair") UI:Toggle(card,"Enabled","Crosshair") UI:Slider(card,"Size","CrosshairSize",1) UI:Slider(card,"Gap","CrosshairGap",1)
         card=UI:Card(left,"Overlay") UI:Toggle(card,"Watermark","Watermark")
+        card=UI:Card(right,"Ambient particles") UI:Toggle(card,"Enabled","AmbientParticles") UI:Color(card,"Color","AmbientColor") UI:Slider(card,"Rate","AmbientRate",1)
     end
     do
         local left,right=UI:Page("Skins")
@@ -788,6 +1296,8 @@ local function start()
         local left,right=UI:Page("Models")
         local card=UI:Card(left,"Avatar preview") UI:Toggle(card,"Enabled","Preview") UI:Toggle(card,"White silhouette","Silhouette") UI:Button(card,"Refresh avatar",function() UI:RefreshPreview() end)
         card=UI:Card(right,"Rotation") UI:Toggle(card,"Auto rotate","PreviewSpin") UI:Slider(card,"Speed","PreviewSpeed",1) UI:Button(card,"Face forward",function() UI.Yaw=0 UI:RotatePreview() end)
+        card=UI:Card(left,"Konchal Hat") UI:Toggle(card,"Enabled","Hat") UI:Color(card,"Color","HatColor") UI:Slider(card,"Size","HatSize",0.1) UI:Slider(card,"Height","HatHeight",0.1) UI:Slider(card,"Spin","HatSpin",5) UI:Dropdown(card,"Target","CosmeticTarget")
+        card=UI:Card(right,"Orbit Halo") UI:Toggle(card,"Enabled","Halo") UI:Color(card,"Color","HaloColor") UI:Slider(card,"Radius","HaloRadius",0.1) UI:Slider(card,"Height","HaloHeight",0.1) UI:Slider(card,"Tilt","HaloTilt",1,"°") UI:Slider(card,"Spin","HaloSpin",5)
     end
     do
         local left,right=UI:Page("Emotes")
@@ -804,14 +1314,20 @@ local function start()
         local left,right=UI:Page("Helpers")
         local card=UI:Card(left,"Quick actions") UI:Button(card,"Refresh avatar",function() UI:RefreshPreview() end) UI:Button(card,"Reset settings",function() App:Reset() end)
         card=UI:Card(right,"Effects") UI:Button(card,"Disable local effects",function()
-            for _,key in ipairs({"Aura","Trail","ESP","Tint","Bloom","SunRays","Blur","ColorGrade","Atmosphere","Fog","Fullbright","Ambient","Exposure","TimeChange","FOVEnabled","Crosshair"}) do App:Set(key,false,true) end App:Set("Preset","Game",true) App:Set("Celestial","Game",true) App:ApplyAll() FX.Sound:Stop() UI:Toast("Efeitos locais desativados")
+            for _,key in ipairs({"Aura","Trail","ESP","Tint","Bloom","SunRays","Blur","ColorGrade","Atmosphere","Fog","Fullbright","Ambient","Exposure","TimeChange","FOVEnabled","Crosshair","Hat","Halo","Glyphs","Circle","AmbientParticles","KillChams","NeonBurst","HitSound","KillSound"}) do App:Set(key,false,true) end App:Set("Preset","Game",true) App:Set("Celestial","Game",true) App:ApplyAll() FX.Sound:Stop() UI:Toast("Efeitos locais desativados")
         end) UI:Button(card,"Unload panel",function() App:Destroy() end)
     end
     do
         local left,right=UI:Page("Menu")
-        local card=UI:Card(left,"Menu") UI:Dropdown(card,"Menu keybind","Keybind") UI:Toggle(card,"Watermark","Watermark") UI:Slider(card,"Transparency","Opacity",0.02) UI:Slider(card,"Interface scale","MenuScale",0.05)
-        card=UI:Card(right,"Config") UI:Textbox(card,"Name",configName,function(value) local clean=value:gsub("[^%w_-]",""):sub(1,32) configName=clean~="" and clean or "default" end) UI:Button(card,"Save config",function() App:SaveConfig() end) UI:Button(card,"Load config",function() App:LoadConfig() end) UI:Button(card,"Reset config",function() App:Reset() end)
+        local card=UI:Card(left,"Menu") UI:Dropdown(card,"Menu keybind","Keybind") UI:Toggle(card,"Watermark","Watermark") UI:Slider(card,"Transparency","Opacity",0.02,"%",nil,100) UI:Slider(card,"Interface scale","MenuScale",0.05) UI:Dropdown(card,"Effect quality","Quality")
+        local artwork=UI:Textbox(card,"Artwork ID","",function(value) App:Set("ArtworkId",value) end) App:Subscribe("ArtworkId",function(value) artwork.Text=value end)
+        card=UI:Card(right,"Config") UI.ConfigName=UI:Textbox(card,"Name",configName,function(value) App:SetConfigName(value) end)
+        local row=UI:Row(card,"Saved configs",125)
+        UI.ConfigItems=UI:New("ScrollingFrame",{Name="SavedConfigs",BackgroundColor3=C.Panel,Size=UDim2.fromScale(1,1),ScrollBarThickness=2,CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y},row)
+        UI:Button(card,"Save config",function() App:SaveConfig() end) UI:Button(card,"Load config",function() App:LoadConfig() end) UI:Button(card,"Refresh list",function() UI:RefreshConfigList() end) UI:Button(card,"Copy config",function() App:CopyConfig() end) UI:Button(card,"Delete config",function() App:DeleteConfig() end) UI:Button(card,"Reset config",function() App:Reset() end)
+        card=UI:Card(left,"Geometry") UI:Wireframe(card)
         card=UI:Card(left,"Session") UI:Button(card,"Hide panel",function() UI:ToggleWindow(false) end) UI:Button(card,"Unload",function() App:Destroy() end)
+        UI:RefreshConfigList()
     end
     do
         local left,right=UI:Page("Music")
@@ -826,24 +1342,34 @@ local function start()
     App:RegisterAction("toggleMenu",function() UI:ToggleWindow(not UI.Visible) end)
     App:RegisterAction("refreshPreview",function() UI:RefreshPreview() end)
     App:RegisterAction("reset",function() App:Reset() end)
+    App:RegisterAction("videoLook",function(name) App:VideoLook(name or "Blue") end)
+    App:RegisterAction("testCircle",function() FX:TestCircle() end)
     App:Connect(player.CharacterAdded,function()
         FX:ClearCharacter() FX:RestoreTint() FX:StopEmotes()
-        task.delay(0.8,function() if App.Active then FX:Character() FX:RefreshTint() UI:RefreshPreview() end end)
+        task.delay(0.8,function() if App.Active then FX:Character() FX:BuildVideo() FX:RefreshTint() UI:RefreshPreview() end end)
     end)
     App:Connect(workspace:GetPropertyChangedSignal("CurrentCamera"),function() FX:Camera() UI:Fit() end)
     local elapsed,frames,espTime,rainbowTime=0,0,0,0
     App:Connect(RunService.RenderStepped,function(dt)
         elapsed,frames,espTime,rainbowTime=elapsed+dt,frames+1,espTime+dt,rainbowTime+dt
+        FX:VideoStep(dt)
         if UI.Visible and App.State.Preview and App.State.PreviewSpin and not UI.Pointer then UI.Yaw=UI.Yaw+math.rad(App.State.PreviewSpeed)*dt UI:RotatePreview() end
         if espTime>=0.25 then espTime=0 if App.State.ESP then FX:RefreshESP() end end
         if App.State.Rainbow and rainbowTime>=0.05 then
             rainbowTime=0 local sequence=ColorSequence.new(Color3.fromHSV((os.clock()*0.13)%1,0.6,1))
-            if FX.AuraEmitter then FX.AuraEmitter.Color=sequence end if FX.TrailObject then FX.TrailObject.Color=sequence end if FX.TrailEmitter then FX.TrailEmitter.Color=sequence end
+            for _,emitter in ipairs(FX.AuraEmitters or {}) do emitter.Color=sequence end
+            for _,trail in ipairs(FX.TrailObjects or {}) do trail.Color=sequence end
+            for _,emitter in ipairs(FX.TrailEmitters or {}) do emitter.Color=sequence end
+            for _,orbit in ipairs(FX.Orbits or {}) do orbit.Trail.Color=sequence end
         end
-        if elapsed>=1 then UI.Watermark.Text="DELTA  /  "..player.DisplayName.."  /  "..math.floor(frames/elapsed).." fps  /  "..os.date("%H:%M") elapsed,frames=0,0 end
+        if elapsed>=1 then
+            local pingOk,ping=pcall(function() return player:GetNetworkPing() end)
+            local latency=pingOk and (tostring(math.floor(ping*1000)).."ms  /  ") or ""
+            UI.Watermark.Text="DELTA 0.3  /  "..player.DisplayName.."  /  "..math.floor(frames/elapsed).." fps  /  "..latency..os.date("%H:%M") elapsed,frames=0,0
+        end
     end)
     App:ApplyAll() UI:RefreshPreview() UI:Select("World") UI:Fit()
-    UI:Toast("Painel carregado · Insert ou ≡ para abrir")
+    UI:Toast("v0.3 · toque Blue look para aplicar o visual do video")
     print("[delta-project] Reference panel v"..App.Version.." loaded")
     return App
 end
