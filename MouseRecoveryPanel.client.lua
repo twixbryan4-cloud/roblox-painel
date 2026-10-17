@@ -248,7 +248,7 @@ local backgroundPhoto = create("ImageLabel", panel, {
     BorderSizePixel = 0,
     ImageTransparency = 0.08,
     ScaleType = Enum.ScaleType.Crop,
-    ZIndex = 1,
+    ZIndex = 0,
 })
 addCorner(backgroundPhoto, 22)
 
@@ -258,7 +258,7 @@ local panelTint = create("Frame", panel, {
     BackgroundColor3 = COLORS.background,
     BackgroundTransparency = menuTransparency,
     BorderSizePixel = 0,
-    ZIndex = 2,
+    ZIndex = 1,
 })
 addCorner(panelTint, 22)
 
@@ -457,7 +457,7 @@ addCorner(closeButton, 12)
 create("Frame", panel, {
     Position = UDim2.new(0, 20, 0, 73),
     Size = UDim2.new(1, -40, 0, 1),
-    BackgroundColor3 = Color3.fromRGB(48, 56, 77),
+    BackgroundColor3 = Color3.fromRGB(83, 32, 47),
     BackgroundTransparency = 0.45,
     BorderSizePixel = 0,
 })
@@ -612,11 +612,11 @@ local statusCard = create("Frame", visualPage, {
     Position = UDim2.fromOffset(0, 24),
     Size = UDim2.new(1, 0, 0, 49),
     BackgroundColor3 = COLORS.card,
-    BackgroundTransparency = 0.38,
+    BackgroundTransparency = 1,
     BorderSizePixel = 0,
 })
 addCorner(statusCard, 12)
-addStroke(statusCard, Color3.fromRGB(70, 83, 112), 0.72, 1)
+addStroke(statusCard, Color3.fromRGB(103, 49, 61), 0.72, 1)
 
 local statusDot = create("Frame", statusCard, {
     Position = UDim2.fromOffset(12, 19),
@@ -662,7 +662,7 @@ local fixButton = create("TextButton", visualPage, {
 })
 addCorner(fixButton, 13)
 create("UIGradient", fixButton, {
-    Color = ColorSequence.new(Color3.fromRGB(73, 194, 255), Color3.fromRGB(131, 93, 255)),
+    Color = ColorSequence.new(Color3.fromRGB(255, 69, 91), Color3.fromRGB(255, 28, 63)),
     Rotation = 0,
 })
 addStroke(fixButton, Color3.fromRGB(181, 223, 255), 0.68, 1)
@@ -671,11 +671,11 @@ local keyCard = create("Frame", visualPage, {
     Position = UDim2.fromOffset(0, 140),
     Size = UDim2.new(1, 0, 0, 52),
     BackgroundColor3 = COLORS.card,
-    BackgroundTransparency = 0.38,
+    BackgroundTransparency = 1,
     BorderSizePixel = 0,
 })
 addCorner(keyCard, 12)
-addStroke(keyCard, Color3.fromRGB(70, 83, 112), 0.74, 1)
+addStroke(keyCard, Color3.fromRGB(103, 49, 61), 0.74, 1)
 
 create("TextLabel", keyCard, {
     BackgroundTransparency = 1,
@@ -692,7 +692,7 @@ local keyButton = create("TextButton", keyCard, {
     AnchorPoint = Vector2.new(1, 0.5),
     Position = UDim2.new(1, -8, 0.5, 0),
     Size = UDim2.fromOffset(94, 34),
-    BackgroundColor3 = Color3.fromRGB(36, 44, 64),
+    BackgroundColor3 = Color3.fromRGB(55, 23, 34),
     BorderSizePixel = 0,
     AutoButtonColor = false,
     Font = Enum.Font.Arcade,
@@ -770,7 +770,7 @@ local opacityTrack = create("TextButton", configPage, {
     Text = "",
 })
 addCorner(opacityTrack, 13)
-addStroke(opacityTrack, Color3.fromRGB(70, 83, 112), 0.72, 1)
+addStroke(opacityTrack, Color3.fromRGB(103, 49, 61), 0.72, 1)
 
 local opacityFill = create("Frame", opacityTrack, {
     Name = "Fill",
@@ -941,7 +941,7 @@ local isOpen = true
 task.defer(function()
     if screenGui.Parent then
         tween(panel, 0.3, {GroupTransparency = 0})
-        tween(shade, 0.3, {BackgroundTransparency = 0.38})
+        tween(shade, 0.3, {BackgroundTransparency = 1})
     end
 end)
 
@@ -956,7 +956,7 @@ local function setPanelOpen(open)
         shade.BackgroundTransparency = 1
         panel.GroupTransparency = 1
         tween(panel, 0.24, {GroupTransparency = 0})
-        tween(shade, 0.24, {BackgroundTransparency = 0.38})
+        tween(shade, 0.24, {BackgroundTransparency = 1})
 
         if floatingButton.Visible then
             tween(floatingScale, 0.14, {Scale = 0.72})
