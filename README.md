@@ -20,8 +20,8 @@ O clipe enviado para esta conversa não é incorporado ao arquivo Lua automatica
 
 - **Info** mostra dados do jogador atual: nome de exibição, usuário, UserId, idade da conta, ping e tipo de entrada/dispositivo.
 - O Roblox não fornece ao LocalScript o endereço IP nem a região de rede do jogador. Esses campos aparecem como indisponíveis.
-- **Visual** contém o botão para liberar o cursor e a escolha de tecla.
-- **Config** tem um controle deslizante para ajustar a transparência do painel. **F6** é a tecla inicial; toque no campo de tecla e pressione outra. **Esc** cancela a seleção.
+- **Visual** contém o botão para liberar o cursor e a escolha de tecla. **F6** é a tecla inicial; toque no campo de tecla e pressione outra. **Esc** cancela a seleção.
+- **Config** tem um controle deslizante para ajustar a transparência do painel.
 - **Right Shift** mostra ou esconde o painel.
 - O botão **−** minimiza o painel. O botão flutuante **N** reabre e pode ser arrastado com mouse ou toque.
 - O cabeçalho mostra **FREE**, **by askzedd** e o tipo de entrada atual (MOBILE, PC ou GAMEPAD).
