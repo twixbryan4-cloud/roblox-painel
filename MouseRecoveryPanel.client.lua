@@ -20,6 +20,7 @@ end
 
 local FIX_KEY = Enum.KeyCode.F6
 local PANEL_KEY = Enum.KeyCode.RightShift
+local VIDEO_ASSET_ID = "" -- Exemplo: "rbxassetid://1234567890"
 local choosingKey = false
 local isFixing = false
 
@@ -203,8 +204,41 @@ local panel = create("CanvasGroup", shade, {
     Size = UDim2.fromOffset(510, 355),
     GroupTransparency = 1,
     BackgroundColor3 = COLORS.panel,
+    BackgroundTransparency = 0.16,
     BorderSizePixel = 0,
+    ZIndex = 1,
 })
+
+local backgroundVideo = create("VideoFrame", panel, {
+    Name = "PanelVideoBackground",
+    Size = UDim2.fromScale(1, 1),
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    ZIndex = 1,
+    Looped = true,
+    Volume = 0,
+    Visible = VIDEO_ASSET_ID ~= "",
+})
+addCorner(backgroundVideo, 22)
+
+local videoTint = create("Frame", panel, {
+    Name = "VideoTint",
+    Size = UDim2.fromScale(1, 1),
+    BackgroundColor3 = COLORS.background,
+    BackgroundTransparency = 0.58,
+    BorderSizePixel = 0,
+    ZIndex = 1,
+    Visible = VIDEO_ASSET_ID ~= "",
+})
+addCorner(videoTint, 22)
+
+if VIDEO_ASSET_ID ~= "" then
+    backgroundVideo.Loaded:Connect(function()
+        backgroundVideo:Play()
+    end)
+    backgroundVideo.Video = VIDEO_ASSET_ID
+end
+
 addCorner(panel, 22)
 addStroke(panel, COLORS.accent2, 0.48, 1)
 
@@ -377,7 +411,7 @@ local function makeCategoryButton(text, y)
         Position = UDim2.fromOffset(0, y),
         Size = UDim2.new(1, 0, 0, 40),
         BackgroundColor3 = COLORS.card,
-        BackgroundTransparency = 0.25,
+        BackgroundTransparency = 0.4,
         BorderSizePixel = 0,
         AutoButtonColor = false,
         Font = Enum.Font.GothamSemibold,
@@ -422,6 +456,7 @@ local function makeInfoRow(label, value, y)
         Position = UDim2.fromOffset(0, y),
         Size = UDim2.new(1, 0, 0, 27),
         BackgroundColor3 = COLORS.card,
+        BackgroundTransparency = 0.28,
         BorderSizePixel = 0,
     })
     addCorner(row, 9)
@@ -498,6 +533,7 @@ local statusCard = create("Frame", visualPage, {
     Position = UDim2.fromOffset(0, 24),
     Size = UDim2.new(1, 0, 0, 49),
     BackgroundColor3 = COLORS.card,
+    BackgroundTransparency = 0.26,
     BorderSizePixel = 0,
 })
 addCorner(statusCard, 12)
@@ -556,6 +592,7 @@ local keyCard = create("Frame", visualPage, {
     Position = UDim2.fromOffset(0, 140),
     Size = UDim2.new(1, 0, 0, 52),
     BackgroundColor3 = COLORS.card,
+    BackgroundTransparency = 0.26,
     BorderSizePixel = 0,
 })
 addCorner(keyCard, 12)
@@ -626,11 +663,11 @@ local function setCategory(category)
     activePage = nextPage
 
     tween(infoTab, 0.15, {
-        BackgroundTransparency = nextTab == infoTab and 0 or 0.25,
+        BackgroundTransparency = nextTab == infoTab and 0.16 or 0.4,
         TextColor3 = nextTab == infoTab and COLORS.text or COLORS.muted,
     })
     tween(visualTab, 0.15, {
-        BackgroundTransparency = nextTab == visualTab and 0 or 0.25,
+        BackgroundTransparency = nextTab == visualTab and 0.16 or 0.4,
         TextColor3 = nextTab == visualTab and COLORS.text or COLORS.muted,
     })
 
@@ -656,9 +693,9 @@ end)
 visualTab.Activated:Connect(function()
     setCategory("Visual")
 end)
-infoTab.BackgroundTransparency = 0
+infoTab.BackgroundTransparency = 0.16
 infoTab.TextColor3 = COLORS.text
-visualTab.BackgroundTransparency = 0.25
+visualTab.BackgroundTransparency = 0.4
 visualTab.TextColor3 = COLORS.muted
 
 -- Botão flutuante que continua acessível depois de minimizar o painel.
