@@ -23,6 +23,8 @@ local PANEL_KEY = Enum.KeyCode.RightShift
 local VIDEO_ASSET_ID = "https://vt.tiktok.com/ZSgYQECos/" -- Troque por rbxassetid://ID quando tiver o asset Roblox
 local HAS_ROBLOX_VIDEO_ASSET = string.match(VIDEO_ASSET_ID, "^rbxassetid://%d+$") ~= nil
 local choosingKey = false
+local opacityDragging = false
+local menuTransparency = 0.48
 local isFixing = false
 
 local COLORS = {
@@ -229,7 +231,7 @@ local videoTint = create("Frame", panel, {
     BackgroundTransparency = 0.66,
     BorderSizePixel = 0,
     ZIndex = 1,
-    Visible = VIDEO_ASSET_ID ~= "",
+    Visible = HAS_ROBLOX_VIDEO_ASSET,
 })
 addCorner(videoTint, 22)
 
@@ -436,8 +438,9 @@ local function makeCategoryButton(text, y)
     return button
 end
 
-local infoTab = makeCategoryButton("ⓘ  Info", 3)
-local visualTab = makeCategoryButton("◉  Visual", 50)
+local infoTab = makeCategoryButton("INFO", 3)
+local visualTab = makeCategoryButton("VISUAL", 50)
+local configTab = makeCategoryButton("CONFIG", 97)
 
 local infoPage = create("Frame", content, {
     Name = "InfoPage",
@@ -448,6 +451,13 @@ local infoPage = create("Frame", content, {
 
 local visualPage = create("Frame", content, {
     Name = "VisualPage",
+    Size = UDim2.fromScale(1, 1),
+    BackgroundTransparency = 1,
+    Visible = false,
+})
+
+local configPage = create("Frame", content, {
+    Name = "ConfigPage",
     Size = UDim2.fromScale(1, 1),
     BackgroundTransparency = 1,
     Visible = false,
@@ -658,13 +668,117 @@ create("TextLabel", visualPage, {
     TextXAlignment = Enum.TextXAlignment.Center,
 })
 
+-- Categoria Config: controla a transparência do painel sem loops de atualização.
+create("TextLabel", configPage, {
+    BackgroundTransparency = 1,
+    Size = UDim2.new(1, 0, 0, 20),
+    Font = Enum.Font.GothamBold,
+    Text = "APARÊNCIA",
+    TextColor3 = COLORS.text,
+    TextSize = 11,
+    TextXAlignment = Enum.TextXAlignment.Left,
+})
+
+local opacityHint = create("TextLabel", configPage, {
+    BackgroundTransparency = 1,
+    Position = UDim2.fromOffset(0, 28),
+    Size = UDim2.new(1, 0, 0, 34),
+    Font = Enum.Font.Gotham,
+    Text = "Ajuste quanto do jogo aparece atrás do menu.",
+    TextColor3 = COLORS.muted,
+    TextSize = 9,
+    TextWrapped = true,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    TextYAlignment = Enum.TextYAlignment.Top,
+})
+
+local opacityValue = create("TextLabel", configPage, {
+    BackgroundTransparency = 1,
+    Position = UDim2.fromOffset(0, 72),
+    Size = UDim2.new(1, 0, 0, 20),
+    Font = Enum.Font.GothamSemibold,
+    Text = "Transparência: 48%",
+    TextColor3 = COLORS.text,
+    TextSize = 10,
+    TextXAlignment = Enum.TextXAlignment.Left,
+})
+
+local opacityTrack = create("TextButton", configPage, {
+    Name = "TransparencySlider",
+    Position = UDim2.fromOffset(0, 101),
+    Size = UDim2.new(1, 0, 0, 26),
+    BackgroundColor3 = COLORS.card,
+    BorderSizePixel = 0,
+    AutoButtonColor = false,
+    Text = "",
+})
+addCorner(opacityTrack, 13)
+addStroke(opacityTrack, Color3.fromRGB(70, 83, 112), 0.72, 1)
+
+local opacityFill = create("Frame", opacityTrack, {
+    Name = "Fill",
+    Position = UDim2.fromOffset(3, 3),
+    Size = UDim2.new(0, 0, 1, -6),
+    BackgroundColor3 = COLORS.accent2,
+    BorderSizePixel = 0,
+})
+addCorner(opacityFill, 10)
+create("UIGradient", opacityFill, {
+    Color = ColorSequence.new(COLORS.accent, COLORS.accent2),
+    Rotation = 0,
+})
+
+local opacityKnob = create("Frame", opacityTrack, {
+    Name = "Knob",
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.new(0, 13, 0.5, 0),
+    Size = UDim2.fromOffset(16, 16),
+    BackgroundColor3 = COLORS.text,
+    BorderSizePixel = 0,
+})
+addCorner(opacityKnob, 10)
+addStroke(opacityKnob, COLORS.accent, 0.15, 1)
+
+local function setTransparencyFromX(x)
+    local width = opacityTrack.AbsoluteSize.X
+    if width <= 0 then
+        return
+    end
+    local fraction = math.clamp((x - opacityTrack.AbsolutePosition.X) / width, 0, 1)
+    menuTransparency = 0.2 + fraction * 0.6
+    local center = 10 + fraction * (width - 20)
+    opacityKnob.Position = UDim2.new(0, center, 0.5, 0)
+    opacityFill.Size = UDim2.new(0, math.max(0, center - 10), 1, -6)
+    opacityValue.Text = "Transparência: " .. tostring(math.floor(fraction * 60 + 20 + 0.5)) .. "%"
+    panel.BackgroundTransparency = menuTransparency
+    shade.BackgroundTransparency = math.clamp(menuTransparency - 0.1, 0.08, 0.58)
+end
+
+opacityTrack.Activated:Connect(function()
+    local mouse = UserInputService:GetMouseLocation()
+    setTransparencyFromX(mouse.X)
+end)
+opacityTrack.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        opacityDragging = true
+        setTransparencyFromX(input.Position.X)
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        opacityDragging = false
+    end
+end)
+
 local selectedTab = infoTab
 local activePage = infoPage
 local categoryTransition = 0
 
 local function setCategory(category)
-    local nextPage = category == "Info" and infoPage or visualPage
-    local nextTab = category == "Info" and infoTab or visualTab
+    local nextPage = category == "Info" and infoPage or (category == "Visual" and visualPage or configPage)
+    local nextTab = category == "Info" and infoTab or (category == "Visual" and visualTab or configTab)
     if activePage == nextPage then
         return
     end
@@ -682,6 +796,10 @@ local function setCategory(category)
         BackgroundTransparency = nextTab == visualTab and 0.16 or 0.4,
         TextColor3 = nextTab == visualTab and COLORS.text or COLORS.muted,
     })
+    tween(configTab, 0.15, {
+        BackgroundTransparency = nextTab == configTab and 0.16 or 0.4,
+        TextColor3 = nextTab == configTab and COLORS.text or COLORS.muted,
+    })
 
     local fadeOut = tween(content, 0.1, {GroupTransparency = 1})
     fadeOut.Completed:Connect(function(playbackState)
@@ -690,6 +808,7 @@ local function setCategory(category)
         end
         infoPage.Visible = nextPage == infoPage
         visualPage.Visible = nextPage == visualPage
+        configPage.Visible = nextPage == configPage
         if nextPage == infoPage then
             refreshPing()
         else
@@ -705,10 +824,15 @@ end)
 visualTab.Activated:Connect(function()
     setCategory("Visual")
 end)
+configTab.Activated:Connect(function()
+    setCategory("Config")
+end)
 infoTab.BackgroundTransparency = 0.16
 infoTab.TextColor3 = COLORS.text
 visualTab.BackgroundTransparency = 0.4
 visualTab.TextColor3 = COLORS.muted
+configTab.BackgroundTransparency = 0.4
+configTab.TextColor3 = COLORS.muted
 
 -- Botão flutuante que continua acessível depois de minimizar o painel.
 local floatingButton = create("TextButton", screenGui, {
@@ -884,6 +1008,11 @@ floatingButton.InputBegan:Connect(function(input)
 end)
 
 UserInputService.InputChanged:Connect(function(input)
+    if opacityDragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch) then
+        setTransparencyFromX(input.Position.X)
+    end
+
     local isMouseDrag = dragInput
         and dragInput.UserInputType == Enum.UserInputType.MouseButton1
         and input.UserInputType == Enum.UserInputType.MouseMovement
