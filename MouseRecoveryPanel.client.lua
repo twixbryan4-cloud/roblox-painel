@@ -81,6 +81,12 @@ local loadingCard = create("Frame", loadingBackground, {
     BackgroundColor3 = COLORS.panel,
     BorderSizePixel = 0,
 })
+local initialCamera = workspace.CurrentCamera
+if initialCamera then
+    create("UIScale", loadingCard, {
+        Scale = math.min(1, initialCamera.ViewportSize.X / 360, initialCamera.ViewportSize.Y / 240),
+    })
+end
 addCorner(loadingCard, 22)
 addStroke(loadingCard, COLORS.accent2, 0.55, 1)
 
@@ -169,6 +175,34 @@ create("UISizeConstraint", panel, {
     MinSize = Vector2.new(310, 330),
     MaxSize = Vector2.new(510, 355),
 })
+
+local panelScale = create("UIScale", panel, {
+    Scale = 1,
+})
+
+local cameraViewportConnection
+local function updatePanelScale()
+    local camera = workspace.CurrentCamera
+    if not camera then
+        return
+    end
+    panelScale.Scale = math.min(1, camera.ViewportSize.X / 550, camera.ViewportSize.Y / 390)
+end
+
+local function watchCurrentCamera()
+    if cameraViewportConnection then
+        cameraViewportConnection:Disconnect()
+        cameraViewportConnection = nil
+    end
+    local camera = workspace.CurrentCamera
+    if camera then
+        cameraViewportConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(updatePanelScale)
+        updatePanelScale()
+    end
+end
+
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(watchCurrentCamera)
+watchCurrentCamera()
 
 local header = create("Frame", panel, {
     BackgroundTransparency = 1,
