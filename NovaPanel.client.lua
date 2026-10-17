@@ -1,7 +1,7 @@
--- NOVA / Camera Panel v1.0
+-- NOVA / Camera Panel v1.1
 -- LocalScript: StarterPlayer > StarterPlayerScripts.
 -- Um arquivo, sem imagens remotas, sem inputs virtuais e sem pulo automatico.
--- A sensibilidade multiplica a entrada da camera padrao (mouse, toque e controle).
+-- Ajusta o giro da camera com APIs publicas, sem exigir PlayerModule/CameraInput.
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -34,11 +34,11 @@ if previous then
 end
 
 local C = {
-    background = Color3.fromRGB(12, 15, 25),
-    surface = Color3.fromRGB(21, 26, 41),
-    line = Color3.fromRGB(60, 70, 96),
+    background = Color3.fromRGB(19, 24, 38),
+    surface = Color3.fromRGB(31, 39, 59),
+    line = Color3.fromRGB(83, 102, 137),
     text = Color3.fromRGB(238, 243, 255),
-    muted = Color3.fromRGB(146, 158, 182),
+    muted = Color3.fromRGB(214, 225, 244),
     cyan = Color3.fromRGB(113, 225, 244),
     purple = Color3.fromRGB(171, 151, 255),
     green = Color3.fromRGB(124, 227, 184),
@@ -48,6 +48,7 @@ local alive, booting, opened, cameraReady = true, true, false, false
 local sensitivity = initialSensitivity
 local connections, activeTweens, pendingTasks = {}, {}, {}
 local restoreCamera
+local updateCameraBinding
 local transitionId = 0
 local drag, sliderPointer
 local lastFloatingDrag = -math.huge
@@ -123,9 +124,22 @@ local function text(parent, value, size, color, position, dimensions, font)
 end
 
 local function gradient(parent, first, last, rotation)
+    -- Em CanvasGroup, UIGradient tinge o resultado inteiro, inclusive as letras.
+    assert(not parent:IsA("CanvasGroup"), "Aplique o gradiente em um Frame de fundo.")
     return make("UIGradient", {
         Color = ColorSequence.new(first, last), Rotation = rotation or 0,
     }, parent)
+end
+
+local function backdrop(group, radius)
+    local background = make("Frame", {
+        Name = "Background", BackgroundColor3 = Color3.new(1, 1, 1),
+        BackgroundTransparency = 0.26, BorderSizePixel = 0, ZIndex = 0,
+        Size = UDim2.fromScale(1, 1), Active = false,
+    }, group)
+    round(background, radius)
+    gradient(background, Color3.fromRGB(33, 43, 65), Color3.fromRGB(17, 23, 38), 65)
+    return background
 end
 
 local function button(parent, name, position, size)
@@ -153,7 +167,7 @@ end
 
 local gui = make("ScreenGui", {
     Name = GUI_NAME, ResetOnSpawn = false, IgnoreGuiInset = false,
-    DisplayOrder = 50, ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+    DisplayOrder = 1000, ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 }, playerGui)
 gui:SetAttribute("Sensitivity", sensitivity)
 local teardown = make("BindableEvent", { Name = "Teardown" }, gui)
@@ -182,13 +196,13 @@ end
 
 local panel = make("CanvasGroup", {
     Name = "Panel", AnchorPoint = Vector2.new(0.5, 0.5),
-    BackgroundColor3 = C.background, BackgroundTransparency = 0.025,
+    BackgroundColor3 = C.background, BackgroundTransparency = 1,
     BorderSizePixel = 0, Size = UDim2.fromOffset(500, 394),
-    GroupTransparency = 1, Visible = false,
+    GroupColor3 = Color3.new(1, 1, 1), GroupTransparency = 1, Visible = false,
 }, root)
 round(panel, 22)
 stroke(panel, C.line, 0.2)
-gradient(panel, Color3.fromRGB(22, 26, 42), Color3.fromRGB(11, 14, 24), 65)
+backdrop(panel, 22)
 local panelScale = make("UIScale", { Scale = 0.96 }, panel)
 local accent = make("Frame", {
     BorderSizePixel = 0, BackgroundColor3 = Color3.new(1, 1, 1),
@@ -257,7 +271,7 @@ local subtitle = text(hero, "Encontre o movimento que combina com você.", 12, C
     UDim2.fromOffset(0, 34), UDim2.new(1, 0, 0, 18))
 
 local card = make("Frame", {
-    Name = "Sensitivity", BackgroundColor3 = C.surface, BackgroundTransparency = 0.16,
+    Name = "Sensitivity", BackgroundColor3 = C.surface, BackgroundTransparency = 0.45,
     BorderSizePixel = 0, Size = UDim2.new(1, 0, 0, 184), LayoutOrder = 2,
 }, body)
 round(card, 16)
@@ -293,6 +307,7 @@ round(valueLabel, 8)
 local sliderHit = button(card, "AjustarSensibilidade", UDim2.fromOffset(18, 63),
     UDim2.new(1, -36, 0, 44))
 sliderHit.BackgroundTransparency = 1
+sliderHit.Active = true
 local track = make("Frame", {
     BorderSizePixel = 0, BackgroundColor3 = Color3.fromRGB(48, 55, 76),
     Position = UDim2.new(0, 0, 0.5, -3), Size = UDim2.new(1, 0, 0, 6),
@@ -324,6 +339,7 @@ for i, preset in ipairs({
     local presetButton = button(card, "Preset" .. i,
         UDim2.new((i - 1) / 3, 18 - (i - 1) * 10, 0, 137),
         UDim2.new(1 / 3, -20, 0, 32))
+    presetButton.BackgroundTransparency = 0.3
     round(presetButton, 9)
     local outline = stroke(presetButton, C.line, 0.6)
     local caption = text(presetButton, preset.title, 11, C.muted,
@@ -342,7 +358,7 @@ local statusDot = make("Frame", {
     Position = UDim2.new(0, 23, 1, -23), Size = UDim2.fromOffset(5, 5),
 }, panel)
 round(statusDot, 5)
-local status = text(panel, "Conectando câmera…", 10, C.muted,
+local status = text(panel, "Preparando controles…", 10, C.muted,
     UDim2.new(0, 36, 1, -31), UDim2.new(1, -58, 0, 20))
 local shortcut = text(panel, "Shift direito para recolher", 10, C.muted,
     UDim2.new(1, -221, 1, -31), UDim2.fromOffset(198, 20))
@@ -351,7 +367,7 @@ shortcut.TextXAlignment = Enum.TextXAlignment.Right
 local floating = make("CanvasGroup", {
     Name = "Floating", BackgroundColor3 = C.background, BorderSizePixel = 0,
     Size = UDim2.fromOffset(56, 56), Position = UDim2.fromOffset(18, 160),
-    GroupTransparency = 1, Visible = false,
+    GroupColor3 = Color3.new(1, 1, 1), GroupTransparency = 1, Visible = false,
 }, root)
 round(floating, 18)
 local floatingStroke = stroke(floating, Color3.new(1, 1, 1), 0.3, 1.3)
@@ -367,13 +383,13 @@ floatingButton.BackgroundTransparency = 1
 
 local loader = make("CanvasGroup", {
     Name = "Initialization", AnchorPoint = Vector2.new(0.5, 0.5),
-    BackgroundColor3 = C.background, BorderSizePixel = 0,
+    BackgroundColor3 = C.background, BackgroundTransparency = 1, BorderSizePixel = 0,
     Size = UDim2.fromOffset(300, 188), Position = UDim2.fromScale(0.5, 0.5),
-    GroupTransparency = 1,
+    GroupColor3 = Color3.new(1, 1, 1), GroupTransparency = 1,
 }, root)
 round(loader, 20)
 stroke(loader, C.line, 0.2)
-gradient(loader, Color3.fromRGB(23, 29, 46), C.background, 65)
+backdrop(loader, 20)
 local loaderScale = make("UIScale", { Scale = 0.94 }, loader)
 local loaderLogo = brand(loader, UDim2.new(0.5, -23, 0, 23), 46)
 local loaderTitle = text(loader, "NOVA", 18, C.text, UDim2.fromOffset(0, 83),
@@ -394,7 +410,7 @@ local progress = make("Frame", {
 round(progress, 3)
 gradient(progress, C.cyan, C.purple)
 
--- Nenhum loop de renderizacao: so eventos e tweens durante interacoes.
+-- A interface so usa eventos e tweens durante interacoes.
 local function canvasSize()
     local size = root.AbsoluteSize
     if size.X > 0 and size.Y > 0 then return size end
@@ -494,11 +510,12 @@ local function setSensitivity(value, smooth)
             }, 0.16)
         end
     end
+    if updateCameraBinding then updateCameraBinding() end
 end
 setSensitivity(sensitivity, false)
 for _, preset in ipairs(presets) do
     connect(preset.button.Activated, function()
-        if cameraReady then setSensitivity(preset.value, true) end
+        setSensitivity(preset.value, true)
     end)
 end
 
@@ -508,6 +525,7 @@ local function setOpen(wantOpen)
     transitionId = transitionId + 1
     local token = transitionId
     drag, sliderPointer = nil, nil
+    body.ScrollingEnabled = true
     panel.Visible, floating.Visible = true, true
     animate(panel, { GroupTransparency = opened and 0 or 1 }, opened and 0.28 or 0.20, function()
         if token == transitionId and not opened then panel.Visible = false end
@@ -570,8 +588,10 @@ local function adjustSlider(input)
     setSensitivity(MIN_SENSITIVITY + alpha * (MAX_SENSITIVITY - MIN_SENSITIVITY), false)
 end
 connect(sliderHit.InputBegan, function(input)
-    if not cameraReady or booting or not isPress(input) or drag or sliderPointer then return end
+    if booting or not isPress(input) or drag or sliderPointer then return end
     sliderPointer = input
+    -- O ScrollingFrame nao deve roubar o arraste horizontal do slider.
+    body.ScrollingEnabled = false
     adjustSlider(input)
 end)
 connect(UserInputService.InputChanged, function(input)
@@ -589,6 +609,7 @@ connect(UserInputService.InputEnded, function(input)
         or (sliderPointer and input.UserInputType == Enum.UserInputType.MouseButton1
             and sliderPointer.UserInputType == Enum.UserInputType.MouseButton1) then
         sliderPointer = nil
+        body.ScrollingEnabled = true
     end
     if drag and (drag.input == input
         or (input.UserInputType == Enum.UserInputType.MouseButton1
@@ -599,6 +620,7 @@ connect(UserInputService.InputEnded, function(input)
 end)
 connect(UserInputService.WindowFocusReleased, function()
     drag, sliderPointer = nil, nil
+    body.ScrollingEnabled = true
 end)
 connect(UserInputService.InputBegan, function(input, processed)
     if not processed and input.KeyCode == Enum.KeyCode.RightShift
@@ -607,43 +629,155 @@ connect(UserInputService.InputBegan, function(input, processed)
     end
 end)
 
--- Integra a entrada, preservando zoom, colisoes, primeira pessoa e shift lock.
--- CameraInput e um modulo interno do PlayerModule; cameras personalizadas
--- podem precisar de integracao propria. Nesse caso a interface informa a falha.
-local function attachCamera()
-    local scripts = player:WaitForChild("PlayerScripts", 5)
-    local module = scripts and scripts:WaitForChild("PlayerModule", 5)
-    local cameraModule = module and module:WaitForChild("CameraModule", 4)
-    local inputModule = cameraModule and cameraModule:WaitForChild("CameraInput", 4)
-    if not alive then return end
-    local ok, cameraInput = pcall(function()
-        assert(inputModule, "CameraInput indisponivel")
-        return require(inputModule)
-    end)
-    if not alive then return end
-    if ok and type(cameraInput) == "table" and type(cameraInput.getRotation) == "function" then
-        local original = cameraInput.getRotation
-        local wrapped = function(...)
-            local rotation = original(...)
-            return rotation * (alive and sensitivity or 1)
-        end
-        local assigned = pcall(function() cameraInput.getRotation = wrapped end)
-        if assigned then
-            restoreCamera = function()
-                if cameraInput.getRotation == wrapped then cameraInput.getRotation = original end
+-- Mede o giro que a camera padrao realmente produziu e ajusta somente esse giro.
+-- Nao depende de require em modulos internos, nao captura cliques e nao altera
+-- CameraType, MouseBehavior ou a sensibilidade salva na conta.
+local BEFORE_CAMERA, AFTER_CAMERA = GUI_NAME .. "_Before", GUI_NAME .. "_After"
+local cameraTouches = {}
+local mousePanning, stickMagnitude, inputMoved, focused = false, 0, false, true
+local bound, sampledCamera, sampledFrame = false, nil, nil
+local atan2 = math.atan2 or math.atan
+local pitchLimit = math.rad(80)
+local collision = RaycastParams.new()
+collision.FilterType = Enum.RaycastFilterType.Exclude
+collision.RespectCanCollide = true
+collision.IgnoreWater = true
+local function refreshCollisionFilter(character)
+    collision.FilterDescendantsInstances = character and { character } or {}
+end
+refreshCollisionFilter(player.Character)
+connect(player.CharacterAdded, refreshCollisionFilter)
+
+local function touchCount()
+    local count = 0
+    for _ in pairs(cameraTouches) do count = count + 1 end
+    return count
+end
+local function overInterface(input)
+    local point = pointerPosition(input)
+    for _, object in ipairs({ panel, floating, loader }) do
+        if object.Visible and object.GroupTransparency < 0.95 then
+            local position, size = object.AbsolutePosition, object.AbsoluteSize
+            if point.X >= position.X and point.Y >= position.Y
+                and point.X <= position.X + size.X and point.Y <= position.Y + size.Y then
+                return true
             end
-            cameraReady = true
-            status.Text, statusDot.BackgroundColor3 = "Sensibilidade conectada", C.green
-            reflow()
-            return
         end
     end
-    status.Text, statusDot.BackgroundColor3 = "Câmera não compatível com este ajuste", C.amber
-    shortcut.Visible = false
-    sliderHit.Active = false
-    warn("[NOVA] A camera nao expoe CameraInput.getRotation; ajuste indisponivel.")
+    return false
 end
-later(0, attachCamera)
+local function beforeCamera()
+    sampledCamera, sampledFrame = nil, nil
+    local moved = inputMoved or stickMagnitude > 0.05
+    inputMoved = false
+    if not moved or not focused or GuiService.MenuIsOpen
+        or UserInputService:GetFocusedTextBox() then return end
+    if touchCount() > 1 then return end -- Deixa o gesto de zoom com dois dedos em paz.
+    local camera = workspace.CurrentCamera
+    if not camera or camera.CameraType == Enum.CameraType.Scriptable then return end
+    sampledCamera, sampledFrame = camera, camera.CFrame
+end
+local function afterCamera()
+    local camera, previousFrame = sampledCamera, sampledFrame
+    sampledCamera, sampledFrame = nil, nil
+    if not camera or camera ~= workspace.CurrentCamera or not previousFrame
+        or camera.CameraType == Enum.CameraType.Scriptable then return end
+    if math.abs(sensitivity - 1) < 0.001 then return end
+    local current = camera.CFrame
+    local beforeLook, afterLook = previousFrame.LookVector, current.LookVector
+    local oldYaw = atan2(-beforeLook.X, -beforeLook.Z)
+    local newYaw = atan2(-afterLook.X, -afterLook.Z)
+    local oldPitch = math.asin(math.clamp(beforeLook.Y, -1, 1))
+    local newPitch = math.asin(math.clamp(afterLook.Y, -1, 1))
+    local yawDelta = atan2(math.sin(newYaw - oldYaw), math.cos(newYaw - oldYaw))
+    local pitchDelta = newPitch - oldPitch
+    if math.abs(yawDelta) + math.abs(pitchDelta) < 0.000001 then return end
+    -- Trocas abruptas de camera/cenas nao devem receber o multiplicador.
+    if math.abs(yawDelta) > math.rad(85) or math.abs(pitchDelta) > math.rad(85) then return end
+    local rotation = CFrame.fromOrientation(
+        math.clamp(oldPitch + pitchDelta * sensitivity, -pitchLimit, pitchLimit),
+        oldYaw + yawDelta * sensitivity, 0)
+    local adjustment = rotation * current.Rotation:Inverse()
+    local pivot = camera.Focus.Position
+    local offset = adjustment:VectorToWorldSpace(current.Position - pivot)
+    local distance = offset.Magnitude
+    if distance > 0.75 then
+        local hit = workspace:Raycast(pivot, offset, collision)
+        if hit and hit.Distance < distance then
+            offset = offset * (math.max(0.1, hit.Distance - 0.2) / distance)
+        end
+    end
+    camera.CFrame = CFrame.new(pivot + offset) * rotation
+end
+updateCameraBinding = function()
+    local locked = UserInputService.MouseBehavior ~= Enum.MouseBehavior.Default
+    local needed = alive and focused and math.abs(sensitivity - 1) >= 0.001
+        and (touchCount() == 1 or mousePanning or locked or stickMagnitude > 0.05)
+    if needed == bound then return end
+    bound = needed
+    sampledCamera, sampledFrame, inputMoved = nil, nil, false
+    if needed then
+        RunService:BindToRenderStep(BEFORE_CAMERA, Enum.RenderPriority.Camera.Value - 1, beforeCamera)
+        RunService:BindToRenderStep(AFTER_CAMERA, Enum.RenderPriority.Camera.Value + 1, afterCamera)
+    else
+        RunService:UnbindFromRenderStep(BEFORE_CAMERA)
+        RunService:UnbindFromRenderStep(AFTER_CAMERA)
+    end
+end
+connect(UserInputService.InputBegan, function(input, processed)
+    if input.UserInputType ~= Enum.UserInputType.Touch
+        and input.UserInputType ~= Enum.UserInputType.MouseButton2 then return end
+    if processed or booting or GuiService.MenuIsOpen or overInterface(input) then return end
+    if input.UserInputType == Enum.UserInputType.Touch then
+        local point, size = pointerPosition(input), canvasSize()
+        -- Evita a area usual do joystick, mesmo quando ele nao marca o toque como processado.
+        if point.X < size.X * 0.4 and point.Y > size.Y * 0.5 then return end
+        cameraTouches[input] = Vector2.new(input.Position.X, input.Position.Y)
+    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+        mousePanning = true
+    end
+    updateCameraBinding()
+end)
+connect(UserInputService.InputChanged, function(input, processed)
+    local last = cameraTouches[input]
+    if last then
+        local point = Vector2.new(input.Position.X, input.Position.Y)
+        if touchCount() == 1 and (point - last).Magnitude > 0 then inputMoved = true end
+        cameraTouches[input] = point
+    elseif input.UserInputType == Enum.UserInputType.MouseMovement then
+        if not drag and not sliderPointer and (mousePanning
+            or UserInputService.MouseBehavior ~= Enum.MouseBehavior.Default) then
+            inputMoved = true
+        end
+    elseif input.KeyCode == Enum.KeyCode.Thumbstick2 then
+        stickMagnitude = processed and 0 or input.Position.Magnitude
+        updateCameraBinding()
+    end
+end)
+connect(UserInputService.InputEnded, function(input)
+    cameraTouches[input] = nil
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then mousePanning = false end
+    if input.KeyCode == Enum.KeyCode.Thumbstick2 then stickMagnitude = 0 end
+    updateCameraBinding()
+end)
+connect(UserInputService:GetPropertyChangedSignal("MouseBehavior"), updateCameraBinding)
+connect(UserInputService.WindowFocusReleased, function()
+    cameraTouches, mousePanning, stickMagnitude, focused = {}, false, 0, false
+    updateCameraBinding()
+end)
+connect(UserInputService.WindowFocused, function()
+    focused = true
+    updateCameraBinding()
+end)
+restoreCamera = function()
+    RunService:UnbindFromRenderStep(BEFORE_CAMERA)
+    RunService:UnbindFromRenderStep(AFTER_CAMERA)
+    cameraTouches, sampledCamera, sampledFrame, bound = {}, nil, nil, false
+end
+cameraReady = true
+status.Text, statusDot.BackgroundColor3 = "Sensibilidade pronta", C.green
+updateCameraBinding()
+reflow()
 
 -- A abertura e curta; o resto da interface fica pronto antes de ser mostrado.
 animate(loader, { GroupTransparency = 0 }, 0.20)
