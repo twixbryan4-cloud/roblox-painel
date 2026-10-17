@@ -13,7 +13,9 @@ Painel em Lua (Luau) para usar **dentro da sua própria experiência** no Roblox
 ## Controles
 
 - **F6** é a tecla inicial para liberar o cursor. Clique no botão de tecla no painel e pressione outra tecla para trocar. **Esc** cancela a seleção.
-- **Right Shift** mostra ou esconde o painel.
+- O botão **−** no topo minimiza o painel.
+- O quadrado flutuante com **N** reabre o painel e pode ser arrastado pela tela (mouse ou toque).
+- **Right Shift** também mostra ou esconde o painel no teclado.
 - O botão **LIBERAR CURSOR** também executa a correção.
 
 A correção define `UserInputService.MouseBehavior` como `Default` e habilita o ícone do mouse. O comando é reaplicado por um curto período para tentar vencer um bloqueio momentâneo da câmera. A escala do painel se adapta a telas menores.
