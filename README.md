@@ -1,35 +1,46 @@
-# Mouse Recovery Panel
+# NOVA · Camera Panel
 
-Painel em Lua (Luau) para usar **dentro da sua própria experiência** no Roblox Studio. O painel tem as categorias **Info**, **Visual** e **Config**, um controle de transparência e um atalho para recuperar o cursor.
+Painel em Lua/Luau para o cliente da sua experiência no Roblox, com apenas o controle de **sensibilidade da câmera**.
 
-## Instalação no Roblox Studio
+## Arquivo atual
 
-1. Abra a experiência no Roblox Studio.
-2. No Explorer, encontre `StarterPlayer > StarterPlayerScripts`.
-3. Insira um **LocalScript** nessa pasta.
-4. Copie o conteúdo de [MouseRecoveryPanel.client.lua](./MouseRecoveryPanel.client.lua) para o LocalScript.
-5. Teste com **Play**.
+- [NovaPanel.client.lua](./NovaPanel.client.lua)
+- [Abrir o código Raw](https://raw.githubusercontent.com/twixbryan4-cloud/roblox-painel/refs/heads/main/NovaPanel.client.lua)
 
-## Imagem de fundo
+## O que tem
 
-A arte enviada foi compactada e embutida diretamente no LocalScript. O carregamento usa `EditableImage` e `WritePixelsBuffer`; para experiências publicadas, as APIs de imagem editável precisam estar habilitadas nas configurações do Creator Dashboard. Se o Roblox bloquear a API ou não houver memória disponível, o painel abre sem a arte.
+- Inicialização animada e curta.
+- Visual escuro com detalhes em azul e lilás, fonte Gotham e crédito **by askzedd**.
+- Ajuste de **0,25× a 3×**, com **1×** como velocidade original.
+- Barra deslizante e atalhos de **0,5×**, **1×** e **2×**.
+- Botão **−** no topo para recolher.
+- Botão flutuante **N**, arrastável com mouse ou toque, para reabrir.
+- Cabeçalho arrastável e adaptação ao tamanho da tela.
+- **Shift direito** para abrir e recolher no teclado.
+- Identificação de entrada: **MOBILE**, **PC** ou **CONTROLE**.
+- Reexecutar substitui a interface anterior e mantém o valor da sessão.
 
-## Categorias e controles
+## Instalação no Studio
 
-- **Info** mostra dados do jogador atual: nome de exibição, usuário, UserId, idade da conta, ping e tipo de entrada/dispositivo.
-- O Roblox não fornece ao LocalScript o endereço IP nem a região de rede do jogador. Esses campos aparecem como indisponíveis.
-- **Visual** contém o botão para liberar o cursor e a escolha de tecla. **F6** é a tecla inicial; toque no campo de tecla e pressione outra. **Esc** cancela a seleção.
-- **Config** tem um controle deslizante para ajustar a transparência apenas do painel.
-- **Right Shift** mostra ou esconde o painel.
-- O botão **−** minimiza o painel. O botão flutuante **N** reabre e pode ser arrastado com mouse ou toque.
-- O cabeçalho mostra **FREE**, **by askzedd** e o tipo de entrada atual (MOBILE, PC ou GAMEPAD).
+1. Abra **StarterPlayer > StarterPlayerScripts**.
+2. Crie um **LocalScript**.
+3. Cole o conteúdo completo de **NovaPanel.client.lua**.
+4. Use **Play** para testar. Para testar toque, use a emulação de dispositivos.
 
-A correção define `UserInputService.MouseBehavior` como `Default` e habilita o ícone do mouse. O comando é reaplicado por um curto período para tentar vencer um bloqueio momentâneo da câmera. A escala do painel se adapta a telas menores.
+## Como a sensibilidade funciona
 
-## Desempenho e animações
+O script procura o CameraInput do PlayerModule padrão e multiplica o resultado de getRotation. Assim, o mesmo controle ajusta a rotação por mouse, toque e controle, mantendo a lógica padrão de zoom e colisões.
 
-A interface reage a entradas e mudanças de tela, sem um loop contínuo por frame. O ping só atualiza enquanto a categoria Info está aberta. As transições usam tweens curtos para suavizar o carregamento, abrir e fechar o painel, alternar categorias e mostrar o botão flutuante.
+Esse módulo é interno ao Roblox e pode mudar. Uma câmera personalizada que não use essa entrada precisa de integração própria. Se a entrada não estiver acessível, o painel informa **“Câmera não compatível com este ajuste”** e não ativa o slider.
 
-## Limite importante
+O valor vale apenas para o cliente e a sessão atual. Não altera a sensibilidade salva na conta Roblox. Ao remover ou substituir o painel, a função original da câmera é restaurada.
 
-Este é um LocalScript para colocar na sua experiência pelo Studio. Ele não é um executor nem altera outros jogos. Se um script de câmera do próprio jogo continuar forçando o mouse para `LockCenter` ou prendendo o jogador em primeira pessoa, ele pode travar o cursor novamente; nesse caso, será preciso ajustar a lógica dessa câmera.
+## Desempenho e verificação
+
+A interface não usa um loop por frame, consultas periódicas a jogadores, imagens externas nem desfoque de tela inteira. As animações usam TweenService apenas ao iniciar e interagir. O controle da câmera acrescenta uma multiplicação à entrada que ela já processa.
+
+Foram verificadas a sintaxe Lua e, em uma simulação de cliente, a sensibilidade, os limites, o slider com toque, o arraste, as transições interrompidas e a limpeza ao reexecutar/remover. **O visual e a integração no Roblox ainda precisam ser conferidos no Studio ou no dispositivo.**
+
+O script não contém pulo automático.
+
+**ReferencePanelDemo.client.lua** é o protótipo anterior; o painel novo usa o arquivo **NovaPanel.client.lua**.
