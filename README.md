@@ -12,7 +12,7 @@ Painel em Lua (Luau) para usar **dentro da sua própria experiência** no Roblox
 
 ## Vídeo de fundo
 
-O vídeo precisa ser enviado ao Roblox como asset antes de tocar no jogo. No início do script, substitua o valor vazio de `VIDEO_ASSET_ID` pelo ID, neste formato: `rbxassetid://1234567890`. O vídeo toca sem áudio e as opções ficam sobre uma camada escura translúcida.
+O script está apontando para o link do TikTok enviado, mas o Roblox pode não reproduzi-lo. Para tocar no jogo, envie o vídeo ao Roblox como asset e substitua `VIDEO_ASSET_ID` pelo ID neste formato: `rbxassetid://1234567890`. O vídeo toca sem áudio e as opções ficam sobre uma camada escura translúcida.
 
 O clipe enviado para esta conversa não é incorporado ao arquivo Lua automaticamente. Use um vídeo que você tenha permissão para publicar e confira as regras e custos atuais de upload do Roblox.
 
