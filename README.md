@@ -1,4 +1,4 @@
-# NOVA · Camera Panel v1.3
+# NOVA · Camera Panel v1.4
 
 Painel em Lua/Luau para o cliente da sua experiência no Roblox, com apenas o controle de **sensibilidade da câmera**.
 
@@ -10,13 +10,16 @@ Painel em Lua/Luau para o cliente da sua experiência no Roblox, com apenas o co
 ## O que tem
 
 - Inicialização animada e curta.
-- Visual escuro em tons de ameixa, cantos arredondados, fonte **Roboto Mono**, títulos em negrito e crédito **by askzedd**.
+- Visual escuro em tons de ameixa, cantos arredondados, fonte pixelada **Press Start 2P (Arcade)** e crédito **by askzedd**.
+- Painel compacto de até **560×360 px**, inicialmente próximo ao topo, com cabeçalho de 50 px e conteúdo começando a 60 px. A versão anterior usava 720×470 px e começava o conteúdo a 80 px.
 - Barra lateral **Main / Misc**, com ícones lineares de casa e cubos desenhados no próprio script.
+- Categorias com fundo visual de 32 px de altura, ícones de 16 px e rótulos de 10–11 px. No toque, a área clicável continua com 44 px de altura.
 - Seleção suave e fade-in de 120 ms ao trocar de categoria, sem esperar uma saída nem reconstruir os controles.
 - Fundo realmente translúcido, com textos e controles preservados em cores claras.
 - Ajuste de **0,1× a 5×**, em passos de **0,1×**. **1×** é a base do controlador NOVA.
 - Botões **−0,1** e **+0,1** para escolher valores como **2,1×** e **2,2×**.
 - Barra deslizante e atalhos de **0,5×**, **1×**, **2×** e **5×**.
+- Ajustes precisos e presets em uma grade compacta: seis colunas quando há espaço, três colunas e duas linhas no celular em retrato. A câmera e os valores mantêm a mesma lógica.
 - Botão **−** no topo para recolher.
 - Botão flutuante **N**, arrastável com mouse ou toque, para reabrir.
 - Cabeçalho arrastável e adaptação ao tamanho da tela.
@@ -39,7 +42,7 @@ Painel em Lua/Luau para o cliente da sua experiência no Roblox, com apenas o co
 
 ## Fundo de vídeo no Studio
 
-A versão v1.2 do repositório não tinha `VideoFrame` nem ID de vídeo configurado. A v1.3 reaproveita um fundo configurado por qualquer uma destas formas:
+A versão v1.2 do repositório não tinha `VideoFrame` nem ID de vídeo configurado. Desde a v1.3, o painel reaproveita um fundo configurado por qualquer uma destas formas:
 
 - Crie um **VideoFrame** chamado **BackgroundVideo** como filho do LocalScript e configure sua propriedade **Video** com o asset do seu vídeo. O script copia o conteúdo, a posição de reprodução e o volume para dentro do painel.
 - Ou crie no LocalScript o atributo **BackgroundVideoId**, como string `rbxassetid://SEU_ID` ou número do asset.
@@ -68,7 +71,7 @@ O bloco do controlador de câmera é idêntico ao da v1.2. Ele mantém um callba
 
 Foram verificadas a sintaxe Lua e, em uma simulação de cliente, a faixa até 5×, os incrementos 2,0→2,1→2,2, o controle único, o conflito com uma câmera que muda a orientação, a travada de 500 ms, a ausência de giro acumulado, os picos de entrada, o limite de colisões, a primeira pessoa, o zoom, o respawn e a limpeza ao reexecutar/remover.
 
-A simulação também cobriu troca rápida de categorias, preservação dos controles, soltura do slider ao trocar de aba, ausência de tweens em repouso e layouts de 320×640 a 1920×1080. Os botões têm alvo mínimo de 44 px; em conteúdo estreito, os presets ficam em duas colunas e as páginas permitem rolagem vertical. O teste do vídeo verifica a integração e a pausa/retomada com um `VideoFrame` simulado; não valida download, permissões ou reprodução de um asset real.
+A simulação também cobriu troca rápida de categorias, preservação dos controles, soltura do slider ao trocar de aba, ausência de tweens em repouso e layouts de 320×640 a 1920×1080. No toque, os botões têm alvo mínimo de 44 px; no PC, os controles ficam mais baixos. Em conteúdo estreito, os seis controles de velocidade ficam em três colunas e as páginas permitem rolagem vertical. O teste do vídeo verifica a integração e a pausa/retomada com um `VideoFrame` simulado; não valida download, permissões ou reprodução de um asset real.
 
 ## Roteiro de teste no Studio
 
