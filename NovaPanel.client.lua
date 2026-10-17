@@ -1,4 +1,4 @@
--- NOVA / Camera Panel v1.3
+-- NOVA / Camera Panel v1.4
 -- LocalScript: StarterPlayer > StarterPlayerScripts.
 -- Interface por categorias. Sem inputs virtuais e sem pulo automatico.
 -- Camera propria em Scriptable, entrada direta e protecao contra deltas de lag.
@@ -82,8 +82,8 @@ local displayedSensitivity
 local transitionId = 0
 local drag, sliderPointer
 local lastFloatingDrag = -math.huge
-local MONO = Font.new("rbxasset://fonts/families/RobotoMono.json", Enum.FontWeight.Regular)
-local MONO_BOLD = Font.new("rbxasset://fonts/families/RobotoMono.json", Enum.FontWeight.Bold)
+local MONO = Font.new("rbxasset://fonts/families/PressStart2P.json", Enum.FontWeight.Regular)
+local MONO_BOLD = MONO -- A fonte pixelada ja tem o desenho forte da referencia.
 
 local function connect(signal, callback)
     local connection = signal:Connect(callback)
@@ -231,7 +231,7 @@ end
 local panel = make("CanvasGroup", {
     Name = "Panel", AnchorPoint = Vector2.new(0.5, 0.5),
     BackgroundColor3 = C.background, BackgroundTransparency = 1,
-    BorderSizePixel = 0, Size = UDim2.fromOffset(720, 470),
+    BorderSizePixel = 0, Size = UDim2.fromOffset(560, 360),
     GroupColor3 = Color3.new(1, 1, 1), GroupTransparency = 1, Visible = false,
 }, root)
 round(panel, 16)
@@ -301,34 +301,34 @@ local panelScale = make("UIScale", { Scale = 0.96 }, panel)
 
 local header = make("Frame", {
     Name = "DragHandle", BackgroundTransparency = 1,
-    Size = UDim2.new(1, 0, 0, 66), Active = true, ZIndex = 3,
+    Size = UDim2.new(1, 0, 0, 50), Active = true, ZIndex = 3,
 }, panel)
 for i, color in ipairs({Color3.fromRGB(238, 93, 110), Color3.fromRGB(231, 187, 92),
     Color3.fromRGB(102, 188, 129)}) do
     local dot = make("Frame", {
         Name = "WindowDot" .. i, BackgroundColor3 = color, BorderSizePixel = 0,
-        Position = UDim2.fromOffset(20 + (i - 1) * 17, 26), Size = UDim2.fromOffset(9, 9),
+        Position = UDim2.fromOffset(16 + (i - 1) * 14, 21), Size = UDim2.fromOffset(7, 7),
         Active = false,
     }, header)
     round(dot, 9)
 end
-local title = text(header, "NOVA", 17, C.text, UDim2.fromOffset(88, 15),
-    UDim2.fromOffset(76, 22), MONO_BOLD)
-local credit = text(header, "by askzedd", 10, C.muted, UDim2.fromOffset(88, 37),
-    UDim2.fromOffset(120, 14))
-local free = text(header, "FREE", 9, C.cyan, UDim2.fromOffset(169, 17),
-    UDim2.fromOffset(42, 18), MONO_BOLD)
+local title = text(header, "NOVA", 12, C.text, UDim2.fromOffset(72, 8),
+    UDim2.fromOffset(62, 20), MONO_BOLD)
+local credit = text(header, "by askzedd", 8, C.muted, UDim2.fromOffset(72, 29),
+    UDim2.fromOffset(100, 13))
+local free = text(header, "FREE", 7, C.cyan, UDim2.fromOffset(145, 11),
+    UDim2.fromOffset(38, 16), MONO_BOLD)
 free.BackgroundTransparency = 0.5
 free.BackgroundColor3 = C.surface
 free.TextXAlignment = Enum.TextXAlignment.Center
 round(free, 6)
-local device = text(header, "PC", 9, C.muted, UDim2.new(1, -132, 0, 21),
-    UDim2.fromOffset(65, 24), MONO_BOLD)
+local device = text(header, "PC", 7, C.muted, UDim2.new(1, -124, 0, 14),
+    UDim2.fromOffset(65, 22), MONO_BOLD)
 device.BackgroundTransparency = 0.65
 device.BackgroundColor3 = C.surface
 device.TextXAlignment = Enum.TextXAlignment.Center
 round(device, 7)
-local minimize = button(header, "Recolher", UDim2.new(1, -58, 0, 11),
+local minimize = button(header, "Recolher", UDim2.new(1, -54, 0, 3),
     UDim2.fromOffset(44, 44))
 minimize.BackgroundTransparency = 0.75
 round(minimize, 10)
@@ -339,18 +339,18 @@ local minus = make("Frame", {
 round(minus, 1)
 make("Frame", {
     BackgroundColor3 = C.line, BackgroundTransparency = 0.85, BorderSizePixel = 0,
-    Position = UDim2.fromOffset(16, 66), Size = UDim2.new(1, -32, 0, 1), ZIndex = 3,
+    Position = UDim2.fromOffset(12, 50), Size = UDim2.new(1, -24, 0, 1), ZIndex = 3,
 }, panel)
 
 local sidebar = make("Frame", {
     Name = "Categories", BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(14, 80), Size = UDim2.new(0, 170, 1, -126),
+    Position = UDim2.fromOffset(10, 60), Size = UDim2.new(0, 120, 1, -96),
     ZIndex = 3,
 }, panel)
-make("UIListLayout", {Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder}, sidebar)
+make("UIListLayout", {Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder}, sidebar)
 local content = make("Frame", {
     Name = "Content", BackgroundTransparency = 1, BorderSizePixel = 0,
-    Position = UDim2.fromOffset(202, 80), Size = UDim2.new(1, -218, 1, -122),
+    Position = UDim2.fromOffset(142, 60), Size = UDim2.new(1, -154, 1, -96),
     ZIndex = 3,
 }, panel)
 local mainPage = make("CanvasGroup", {
@@ -367,30 +367,30 @@ local body = make("ScrollingFrame", {
     ElasticBehavior = Enum.ElasticBehavior.WhenScrollable,
 }, mainPage)
 make("UIListLayout", {
-    Padding = UDim.new(0, 14), SortOrder = Enum.SortOrder.LayoutOrder,
+    Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder,
 }, body)
 make("UIPadding", { PaddingBottom = UDim.new(0, 2), PaddingRight = UDim.new(0, 2) }, body)
 local hero = make("Frame", {
-    BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 48), LayoutOrder = 1,
+    BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 24), LayoutOrder = 1,
 }, body)
-local headline = text(hero, "Câmera", 19, C.text,
-    UDim2.fromOffset(0, 0), UDim2.new(1, 0, 0, 26), MONO_BOLD)
+local headline = text(hero, "Câmera", 12, C.text,
+    UDim2.fromOffset(0, 0), UDim2.new(1, 0, 0, 20), MONO_BOLD)
 local subtitle = text(hero, "Ajuste o seu movimento.", 11, C.muted,
     UDim2.fromOffset(0, 29), UDim2.new(1, 0, 0, 17))
 
 local card = make("Frame", {
-    Name = "Sensitivity", BackgroundColor3 = C.surface, BackgroundTransparency = 0.78,
-    BorderSizePixel = 0, Size = UDim2.new(1, 0, 0, 240), LayoutOrder = 2,
+    Name = "Sensitivity", BackgroundColor3 = C.surface, BackgroundTransparency = 0.84,
+    BorderSizePixel = 0, Size = UDim2.new(1, 0, 0, 156), LayoutOrder = 2,
 }, body)
 round(card, 12)
 stroke(card, C.line, 0.85)
 local cameraIcon = make("Frame", {
     BackgroundTransparency = 1, BorderSizePixel = 0,
-    Position = UDim2.fromOffset(16, 16), Size = UDim2.fromOffset(28, 28),
+    Position = UDim2.fromOffset(12, 8), Size = UDim2.fromOffset(22, 22),
 }, card)
 round(cameraIcon, 9)
 local cameraOutline = make("Frame", {
-    BackgroundTransparency = 1, Position = UDim2.fromOffset(6, 8),
+    BackgroundTransparency = 1, Position = UDim2.fromOffset(3, 5),
     Size = UDim2.fromOffset(16, 12), BorderSizePixel = 0,
 }, cameraIcon)
 round(cameraOutline, 3)
@@ -401,12 +401,12 @@ local lens = make("Frame", {
 }, cameraOutline)
 round(lens, 5)
 stroke(lens, C.cyan, 0.12, 1.1)
-local sensitivityTitle = text(card, "Sensibilidade", 14, C.text, UDim2.fromOffset(54, 14),
-    UDim2.new(1, -145, 0, 22), MONO_BOLD)
-local sensitivityDescription = text(card, "Arraste para ajustar.", 11, C.muted, UDim2.fromOffset(54, 36),
-    UDim2.new(1, -145, 0, 16))
-local valueLabel = text(card, "", 13, C.cyan, UDim2.new(1, -82, 0, 17),
-    UDim2.fromOffset(65, 28), MONO_BOLD)
+local sensitivityTitle = text(card, "Sensibilidade", 11, C.text, UDim2.fromOffset(40, 7),
+    UDim2.new(1, -126, 0, 20), MONO_BOLD)
+local sensitivityDescription = text(card, "Arraste a barra.", 8, C.muted, UDim2.fromOffset(40, 27),
+    UDim2.new(1, -126, 0, 13))
+local valueLabel = text(card, "", 10, C.cyan, UDim2.new(1, -74, 0, 10),
+    UDim2.fromOffset(62, 22), MONO_BOLD)
 valueLabel.TextXAlignment = Enum.TextXAlignment.Center
 valueLabel.BackgroundColor3 = C.surface
 valueLabel.BackgroundTransparency = 0.7
@@ -418,7 +418,7 @@ sliderHit.BackgroundTransparency = 1
 sliderHit.Active = true
 local track = make("Frame", {
     BorderSizePixel = 0, BackgroundColor3 = Color3.fromRGB(69, 57, 77),
-    Position = UDim2.new(0, 0, 0.5, -3), Size = UDim2.new(1, 0, 0, 6),
+    Position = UDim2.new(0, 0, 0.5, -2), Size = UDim2.new(1, 0, 0, 4),
 }, sliderHit)
 round(track, 4)
 local fill = make("Frame", {
@@ -429,13 +429,13 @@ round(fill, 4)
 gradient(fill, C.cyan, C.purple)
 local knob = make("Frame", {
     AnchorPoint = Vector2.new(0.5, 0.5), BackgroundColor3 = C.text, BorderSizePixel = 0,
-    Position = UDim2.fromScale(0, 0.5), Size = UDim2.fromOffset(18, 18),
+    Position = UDim2.fromScale(0, 0.5), Size = UDim2.fromOffset(12, 12),
 }, track)
 round(knob, 20)
 stroke(knob, C.cyan, 0.25, 2)
-local lowerLimit = text(card, "0,1×  ·  PRECISA", 9, C.muted, UDim2.fromOffset(18, 109),
+local lowerLimit = text(card, "0,1×  ·  PRECISA", 7, C.muted, UDim2.fromOffset(18, 109),
     UDim2.new(0.5, -18, 0, 15), MONO)
-local upperLimit = text(card, "RÁPIDA  ·  5×", 9, C.muted, UDim2.new(0.5, 0, 0, 109),
+local upperLimit = text(card, "RÁPIDA  ·  5×", 7, C.muted, UDim2.new(0.5, 0, 0, 109),
     UDim2.new(0.5, -18, 0, 15), MONO)
 upperLimit.TextXAlignment = Enum.TextXAlignment.Right
 
@@ -443,11 +443,11 @@ local decrease = button(card, "Diminuir01", UDim2.fromOffset(18, 128),
     UDim2.fromOffset(54, 44))
 local increase = button(card, "Aumentar01", UDim2.new(1, -72, 0, 128),
     UDim2.fromOffset(54, 44))
-for _, item in ipairs({ { decrease, "− 0,1" }, { increase, "+ 0,1" } }) do
-    round(item[1], 10)
+for _, item in ipairs({ { decrease, "−0,1" }, { increase, "+0,1" } }) do
+    round(item[1], 8)
     item[1].BackgroundTransparency = 0.72
     stroke(item[1], C.line, 0.82)
-    local caption = text(item[1], item[2], 12, C.cyan,
+    local caption = text(item[1], item[2], 9, C.cyan,
         UDim2.fromScale(0, 0), UDim2.fromScale(1, 1), MONO_BOLD)
     caption.TextXAlignment = Enum.TextXAlignment.Center
 end
@@ -466,7 +466,7 @@ for i, preset in ipairs({
     presetButton.BackgroundTransparency = 0.72
     round(presetButton, 9)
     local outline = stroke(presetButton, C.line, 0.82)
-    local caption = text(presetButton, preset.title, 11, C.muted,
+    local caption = text(presetButton, preset.title, 9, C.muted,
         UDim2.fromScale(0, 0), UDim2.fromScale(1, 1), MONO_BOLD)
     caption.TextXAlignment = Enum.TextXAlignment.Center
     preset.button, preset.outline, preset.caption = presetButton, outline, caption
@@ -486,24 +486,24 @@ local miscBody = make("ScrollingFrame", {
     ScrollBarImageColor3 = C.purple, ScrollBarImageTransparency = 0.6,
     ElasticBehavior = Enum.ElasticBehavior.WhenScrollable,
 }, miscPage)
-make("UIListLayout", {Padding = UDim.new(0, 12), SortOrder = Enum.SortOrder.LayoutOrder}, miscBody)
+make("UIListLayout", {Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder}, miscBody)
 make("UIPadding", {PaddingRight = UDim.new(0, 2), PaddingBottom = UDim.new(0, 4)}, miscBody)
 local miscHero = make("Frame", {
-    BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 48), LayoutOrder = 1,
+    BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 24), LayoutOrder = 1,
 }, miscBody)
-text(miscHero, "Interface", 19, C.text, UDim2.fromOffset(0, 0),
-    UDim2.new(1, 0, 0, 26), MONO_BOLD)
+text(miscHero, "Interface", 12, C.text, UDim2.fromOffset(0, 0),
+    UDim2.new(1, 0, 0, 20), MONO_BOLD)
 local miscSubtitle = text(miscHero, "Seus controles de acesso.", 11, C.muted,
     UDim2.fromOffset(0, 29), UDim2.new(1, 0, 0, 17))
 local function infoRow(name, label, value, order)
     local row = make("Frame", {
         Name = name, BackgroundColor3 = C.surface, BackgroundTransparency = 0.82,
-        Size = UDim2.new(1, 0, 0, 70), BorderSizePixel = 0, LayoutOrder = order,
+        Size = UDim2.new(1, 0, 0, 52), BorderSizePixel = 0, LayoutOrder = order,
     }, miscBody)
     round(row, 10)
-    text(row, label, 11, C.muted, UDim2.fromOffset(14, 10), UDim2.new(1, -28, 0, 18))
-    local valueText = text(row, value, 13, C.text, UDim2.fromOffset(14, 32),
-        UDim2.new(1, -28, 0, 28), MONO_BOLD)
+    text(row, label, 8, C.muted, UDim2.fromOffset(10, 6), UDim2.new(1, -20, 0, 14))
+    local valueText = text(row, value, 9, C.text, UDim2.fromOffset(10, 24),
+        UDim2.new(1, -20, 0, 22), MONO_BOLD)
     valueText.TextWrapped, valueText.TextTruncate = true, Enum.TextTruncate.None
     return valueText
 end
@@ -514,10 +514,10 @@ local miscMinimize = button(miscBody, "RecolherPeloMenu", UDim2.fromOffset(0, 0)
 miscMinimize.LayoutOrder, miscMinimize.BackgroundTransparency = 4, 0.72
 round(miscMinimize, 10)
 stroke(miscMinimize, C.line, 0.82)
-local miscMinimizeLabel = text(miscMinimize, "Recolher painel", 12, C.text,
+local miscMinimizeLabel = text(miscMinimize, "Recolher painel", 9, C.text,
     UDim2.fromOffset(8, 0), UDim2.new(1, -16, 1, 0), MONO_BOLD)
 miscMinimizeLabel.TextXAlignment = Enum.TextXAlignment.Center
-local miscCredit = text(miscBody, "NOVA · FREE\nby askzedd", 11, C.muted,
+local miscCredit = text(miscBody, "NOVA · FREE\nby askzedd", 8, C.muted,
     UDim2.fromOffset(0, 0), UDim2.new(1, 0, 0, 44))
 miscCredit.LayoutOrder = 5
 
@@ -525,7 +525,7 @@ miscCredit.LayoutOrder = 5
 local function categoryIcon(parent, kind)
     local icon = make("CanvasGroup", {
         Name = "CategoryIcon", BackgroundTransparency = 1,
-        Position = UDim2.new(0, 14, 0.5, -11), Size = UDim2.fromOffset(22, 22),
+        Position = UDim2.new(0, 10, 0.5, -8), Size = UDim2.fromOffset(16, 16),
         GroupColor3 = C.muted, GroupTransparency = 0,
     }, parent)
     local function line(x1, y1, x2, y2)
@@ -533,8 +533,8 @@ local function categoryIcon(parent, kind)
         local segment = make("Frame", {
             BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0,
             AnchorPoint = Vector2.new(0.5, 0.5),
-            Position = UDim2.fromOffset((x1 + x2) * 11 / 24, (y1 + y2) * 11 / 24),
-            Size = UDim2.fromOffset(math.sqrt(dx * dx + dy * dy) * 22 / 24, 1.6),
+            Position = UDim2.fromOffset((x1 + x2) * 8 / 24, (y1 + y2) * 8 / 24),
+            Size = UDim2.fromOffset(math.sqrt(dx * dx + dy * dy) * 16 / 24, 1.3),
             Rotation = math.deg((math.atan2 or math.atan)(dy, dx)),
         }, icon)
         round(segment, 2)
@@ -555,15 +555,20 @@ end
 local categories = {}
 for i, definition in ipairs({{"Main", "home", mainPage}, {"Misc", "boxes", miscPage}}) do
     local item = button(sidebar, definition[1] .. "Category", UDim2.fromOffset(0, 0),
-        UDim2.new(1, 0, 0, 52))
-    item.LayoutOrder, item.BackgroundTransparency = i, 0.96
-    round(item, 12)
-    local border = stroke(item, C.line, 0.92)
+        UDim2.new(1, 0, 0, 44))
+    item.LayoutOrder, item.BackgroundTransparency = i, 1
+    local surface = make("Frame", {
+        Name = "CategorySurface", BackgroundColor3 = C.surface, BackgroundTransparency = 0.96,
+        BorderSizePixel = 0, Position = UDim2.new(0, 0, 0.5, -16),
+        Size = UDim2.new(1, 0, 0, 32), Active = false,
+    }, item)
+    round(surface, 8)
+    local border = stroke(surface, C.line, 0.92)
     local icon = categoryIcon(item, definition[2])
-    local caption = text(item, definition[1], 15, C.muted, UDim2.fromOffset(48, 0),
-        UDim2.new(1, -58, 1, 0), MONO_BOLD)
+    local caption = text(item, definition[1], 11, C.muted, UDim2.fromOffset(34, 0),
+        UDim2.new(1, -40, 1, 0), MONO_BOLD)
     caption.Name = "CategoryLabel"
-    categories[definition[1]] = {button = item, icon = icon, caption = caption,
+    categories[definition[1]] = {button = item, surface = surface, icon = icon, caption = caption,
         border = border, page = definition[3]}
 end
 local currentCategory
@@ -584,10 +589,10 @@ local function setCategory(name, instant)
         local transparency = selected and 0.48 or 0.96
         local color = selected and C.text or C.muted
         if instant then
-            item.button.BackgroundTransparency, item.caption.TextColor3 = transparency, color
+            item.surface.BackgroundTransparency, item.caption.TextColor3 = transparency, color
             item.icon.GroupColor3, item.border.Transparency = color, selected and 0.76 or 0.92
         else
-            animate(item.button, {BackgroundTransparency = transparency}, 0.14)
+            animate(item.surface, {BackgroundTransparency = transparency}, 0.14)
             animate(item.caption, {TextColor3 = color}, 0.14)
             animate(item.icon, {GroupColor3 = color}, 0.14)
             animate(item.border, {Transparency = selected and 0.76 or 0.92}, 0.14)
@@ -603,30 +608,30 @@ setCategory("Main", true)
 
 make("Frame", {
     BackgroundColor3 = C.line, BackgroundTransparency = 0.85, BorderSizePixel = 0,
-    Position = UDim2.new(0, 16, 1, -34), Size = UDim2.new(1, -32, 0, 1), ZIndex = 3,
+    Position = UDim2.new(0, 12, 1, -26), Size = UDim2.new(1, -24, 0, 1), ZIndex = 3,
 }, panel)
 local statusDot = make("Frame", {
     BackgroundColor3 = C.amber, BorderSizePixel = 0,
-    Position = UDim2.new(0, 17, 1, -19), Size = UDim2.fromOffset(5, 5), ZIndex = 3,
+    Position = UDim2.new(0, 13, 1, -15), Size = UDim2.fromOffset(4, 4), ZIndex = 3,
 }, panel)
 round(statusDot, 5)
-local status = text(panel, "Preparando controles…", 10, C.muted,
-    UDim2.new(0, 29, 1, -27), UDim2.new(1, -58, 0, 20))
-local shortcut = text(panel, "Shift direito para recolher", 10, C.muted,
-    UDim2.new(1, -235, 1, -27), UDim2.fromOffset(218, 20))
+local status = text(panel, "Preparando controles…", 7, C.muted,
+    UDim2.new(0, 24, 1, -22), UDim2.new(1, -48, 0, 18))
+local shortcut = text(panel, "Shift direito", 7, C.muted,
+    UDim2.new(1, -202, 1, -22), UDim2.fromOffset(190, 18))
 status.ZIndex, shortcut.ZIndex = 3, 3
 shortcut.TextXAlignment = Enum.TextXAlignment.Right
 
 local floating = make("CanvasGroup", {
     Name = "Floating", BackgroundColor3 = C.background, BorderSizePixel = 0,
-    Size = UDim2.fromOffset(56, 56), Position = UDim2.fromOffset(18, 160),
+    Size = UDim2.fromOffset(48, 48), Position = UDim2.fromOffset(18, 160),
     GroupColor3 = Color3.new(1, 1, 1), GroupTransparency = 1, Visible = false,
 }, root)
 round(floating, 18)
 local floatingStroke = stroke(floating, Color3.new(1, 1, 1), 0.3, 1.3)
 gradient(floatingStroke, C.cyan, C.purple, 45)
 local floatingScale = make("UIScale", { Scale = 0.78 }, floating)
-local floatingLetter = text(floating, "N", 28, C.text,
+local floatingLetter = text(floating, "N", 20, C.text,
     UDim2.fromScale(0, 0), UDim2.fromScale(1, 1), MONO_BOLD)
 floatingLetter.TextXAlignment = Enum.TextXAlignment.Center
 gradient(floatingLetter, C.cyan, C.purple, 45)
@@ -648,7 +653,7 @@ local loaderLogo = brand(loader, UDim2.new(0.5, -23, 0, 23), 46)
 local loaderTitle = text(loader, "NOVA", 18, C.text, UDim2.fromOffset(0, 83),
     UDim2.new(1, 0, 0, 24), MONO_BOLD)
 loaderTitle.TextXAlignment = Enum.TextXAlignment.Center
-local loaderCaption = text(loader, "Preparando seus controles", 11, C.muted,
+local loaderCaption = text(loader, "Preparando seus controles", 9, C.muted,
     UDim2.fromOffset(0, 111), UDim2.new(1, 0, 0, 18))
 loaderCaption.TextXAlignment = Enum.TextXAlignment.Center
 local progressTrack = make("Frame", {
@@ -686,81 +691,74 @@ end
 local firstLayout = true
 local function reflow()
     local size = canvasSize()
-    local width, height = math.min(720, math.max(0, size.X - 24)),
-        math.min(470, math.max(0, size.Y - 24))
+    local width, height = math.min(560, math.max(0, size.X - 24)),
+        math.min(360, math.max(0, size.Y - 24))
     panel.Size = UDim2.fromOffset(width, height)
-    local center = firstLayout and size / 2
+    local center = firstLayout and Vector2.new(size.X / 2, height / 2 + 16)
         or Vector2.new(panel.Position.X.Offset, panel.Position.Y.Offset)
     local position = clampPosition(panel, center)
     panel.Position = UDim2.fromOffset(position.X, position.Y)
-    if firstLayout then floating.Position = UDim2.fromOffset(18, math.max(12, size.Y / 2 - 28)) end
+    if firstLayout then floating.Position = UDim2.fromOffset(18, math.max(12, size.Y / 2 - 24)) end
     local floatingPosition = clampPosition(floating,
         Vector2.new(floating.Position.X.Offset, floating.Position.Y.Offset))
     floating.Position = UDim2.fromOffset(floatingPosition.X, floatingPosition.Y)
     loader.Size = UDim2.fromOffset(math.min(300, math.max(200, size.X - 28)), 188)
-    local compactHeader = width < 440
+    local touch = UserInputService.TouchEnabled
+        or UserInputService.PreferredInput == Enum.PreferredInput.Touch
+    local buttonHeight = touch and 44 or 32
+    local compactHeader = width < 400
     for i = 1, 3 do header:FindFirstChild("WindowDot" .. i).Visible = not compactHeader end
-    title.Position = UDim2.fromOffset(compactHeader and 16 or 88, 15)
-    credit.Position = UDim2.fromOffset(compactHeader and 16 or 88, 37)
-    free.Position = UDim2.fromOffset(compactHeader and 99 or 169, 17)
-    free.Size = UDim2.fromOffset(compactHeader and 36 or 42, 18)
-    device.Position = UDim2.new(1, compactHeader and -116 or -132, 0, 21)
-    device.Size = UDim2.fromOffset(compactHeader and 56 or 65, 24)
-    device.TextSize = compactHeader and 8 or 9
-    local sidebarWidth = width < 500 and 88 or (width < 640 and 140 or 170)
-    sidebar.Size = UDim2.new(0, sidebarWidth, 1, -126)
-    sidebar.Position = UDim2.fromOffset(12, 80)
-    local contentX = sidebarWidth + 26
-    content.Position = UDim2.fromOffset(contentX, 80)
-    content.Size = UDim2.new(1, -contentX - 14, 1, -122)
-    local contentWidth = width - contentX - 16
+    title.Position = UDim2.fromOffset(compactHeader and 14 or 72, 8)
+    credit.Position = UDim2.fromOffset(compactHeader and 14 or 72, 29)
+    free.Position = UDim2.fromOffset(compactHeader and 88 or 145, 11)
+    device.Position = UDim2.new(1, touch and -124 or -116, 0, 14)
+    minimize.Size = UDim2.fromOffset(touch and 44 or 36, touch and 44 or 36)
+    minimize.Position = UDim2.new(1, touch and -54 or -46, 0, touch and 3 or 7)
+    minus.Position, minus.Size = UDim2.new(0.5, -6, 0.5, -1), UDim2.fromOffset(12, 2)
+    local sidebarWidth = width < 420 and 86 or (width < 540 and 104 or 120)
+    sidebar.Size = UDim2.new(0, sidebarWidth, 1, -96)
+    sidebar.Position = UDim2.fromOffset(10, 60)
+    local contentX = sidebarWidth + 22
+    content.Position = UDim2.fromOffset(contentX, 60)
+    content.Size = UDim2.new(1, -contentX - 12, 1, -96)
+    local contentWidth = width - contentX - 14
     for _, category in pairs(categories) do
-        local compact = width < 500
-        category.caption.TextSize = compact and 12 or 15
-        category.caption.Position = UDim2.fromOffset(compact and 34 or 48, 0)
-        category.caption.Size = UDim2.new(1, compact and -40 or -58, 1, 0)
-        category.icon.Position = UDim2.new(0, compact and 8 or 14, 0.5, -11)
+        category.button.Size = UDim2.new(1, 0, 0, touch and 44 or 36)
+        category.caption.TextSize = width < 420 and 10 or 11
     end
-    local narrow = contentWidth < 320
-    local veryNarrow = contentWidth < 240
-    sensitivityTitle.Position = UDim2.fromOffset(veryNarrow and 14 or 54, 14)
-    sensitivityTitle.Size = UDim2.new(1, narrow and (veryNarrow and -28 or -68) or -145, 0, 22)
-    sensitivityTitle.TextSize = veryNarrow and 13 or 14
-    sensitivityDescription.Position = UDim2.fromOffset(veryNarrow and 14 or 54, 36)
-    sensitivityDescription.Size = UDim2.new(1, narrow and (veryNarrow and -28 or -68) or -145, 0, 18)
-    sensitivityDescription.TextSize = veryNarrow and 10 or 11
-    cameraIcon.Visible = not veryNarrow
-    valueLabel.Position = narrow and UDim2.fromOffset(14, 62) or UDim2.new(1, -82, 0, 17)
-    sliderHit.Position = UDim2.fromOffset(narrow and 14 or 18, narrow and 98 or 63)
-    sliderHit.Size = UDim2.new(1, narrow and -28 or -36, 0, 44)
-    lowerLimit.Position = UDim2.fromOffset(narrow and 14 or 18, narrow and 142 or 109)
-    upperLimit.Position = UDim2.new(0.5, 0, 0, narrow and 142 or 109)
+    local narrow = contentWidth < 324
+    sensitivityTitle.Position = UDim2.fromOffset(narrow and 12 or 40, 7)
+    sensitivityTitle.Size = UDim2.new(1, narrow and -24 or -126, 0, 20)
+    sensitivityTitle.TextSize = narrow and 10 or 11
+    sensitivityDescription.Position = UDim2.fromOffset(narrow and 12 or 40, 27)
+    sensitivityDescription.Size = UDim2.new(1, narrow and -24 or -126, 0, 13)
+    cameraIcon.Visible = not narrow
+    valueLabel.Position = narrow and UDim2.fromOffset(12, 46) or UDim2.new(1, -74, 0, 10)
+    sliderHit.Position = UDim2.fromOffset(12, narrow and 72 or 42)
+    sliderHit.Size = UDim2.new(1, -24, 0, 44)
+    lowerLimit.Position = UDim2.fromOffset(12, narrow and 110 or 82)
+    upperLimit.Position = UDim2.new(0.5, 0, 0, narrow and 110 or 82)
+    lowerLimit.Size, upperLimit.Size = UDim2.new(0.5, -12, 0, 13), UDim2.new(0.5, -12, 0, 13)
     lowerLimit.Text = narrow and "0,1×" or "0,1× · PRECISA"
     upperLimit.Text = narrow and "5×" or "RÁPIDA · 5×"
-    decrease.Position = UDim2.fromOffset(narrow and 14 or 18, narrow and 164 or 128)
-    increase.Position = UDim2.new(1, narrow and -68 or -72, 0, narrow and 164 or 128)
-    precisionHint.Visible = not narrow
-    for i, preset in ipairs(presets) do
-        if narrow then
-            local column, row = (i - 1) % 2, math.floor((i - 1) / 2)
-            preset.button.Position = UDim2.new(column / 2, 14 - column * 10, 0, 220 + row * 52)
-            preset.button.Size = UDim2.new(0.5, -18, 0, 44)
-        else
-            preset.button.Position = UDim2.new((i - 1) / 4, 18 - (i - 1) * 7, 0, 184)
-            preset.button.Size = UDim2.new(0.25, -15, 0, 44)
-        end
+    precisionHint.Visible = false
+    local controls = {decrease, increase, presets[1].button, presets[2].button,
+        presets[3].button, presets[4].button}
+    local columns, gap = narrow and 3 or 6, 6
+    local cellWidth = math.floor((contentWidth - 24 - gap * (columns - 1)) / columns)
+    local gridTop = narrow and 130 or 100
+    for i, control in ipairs(controls) do
+        local column, row = (i - 1) % columns, math.floor((i - 1) / columns)
+        control.Position = UDim2.fromOffset(12 + column * (cellWidth + gap), gridTop + row * (buttonHeight + gap))
+        control.Size = UDim2.fromOffset(cellWidth, buttonHeight)
     end
-    card.Size = UDim2.new(1, 0, 0, narrow and 332 or 244)
-    for _, description in ipairs({subtitle, miscSubtitle}) do
-        description.TextWrapped, description.TextTruncate = true, Enum.TextTruncate.None
-        description.Size = UDim2.new(1, 0, 0, veryNarrow and 32 or 17)
-    end
-    hero.Size = UDim2.new(1, 0, 0, veryNarrow and 64 or 48)
-    miscHero.Size = hero.Size
-    miscMinimizeLabel.TextSize = veryNarrow and 10 or 12
-    shortcut.Visible = width >= 620 and cameraReady
-    status.Size = UDim2.new(1, width >= 620 and -260 or -46, 0, 20)
-    status.TextSize = width < 500 and 9 or 10
+    local rows = math.ceil(#controls / columns)
+    card.Size = UDim2.new(1, 0, 0, gridTop + rows * buttonHeight + (rows - 1) * gap + 8)
+    subtitle.Visible, miscSubtitle.Visible = false, false
+    miscMinimize.Size = UDim2.new(1, 0, 0, buttonHeight)
+    miscCredit.Size = UDim2.new(1, 0, 0, 32)
+    shortcut.Visible = width >= 520 and cameraReady
+    status.Size = UDim2.new(1, width >= 520 and -220 or -40, 0, 18)
     fitBackgroundVideo()
     firstLayout = false
 end
@@ -771,17 +769,18 @@ local function updateDevice()
     local preferred = UserInputService.PreferredInput
     if preferred == Enum.PreferredInput.Touch then
         device.Text = "MOBILE"
-        shortcut.Text = "Arraste o botão flutuante"
+        shortcut.Text = "Arraste o flutuante"
     elseif preferred == Enum.PreferredInput.Gamepad then
         device.Text = "CONTROLE"
-        shortcut.Text = "Use o botão − para recolher"
+        shortcut.Text = "Botão − para recolher"
     else
         device.Text = "PC"
-        shortcut.Text = "Shift direito para recolher"
+        shortcut.Text = "Shift direito"
     end
     miscDevice.Text = device.Text
     miscShortcut.Text = preferred == Enum.PreferredInput.KeyboardAndMouse
         and "Shift direito" or "Botão flutuante"
+    reflow()
 end
 connect(UserInputService:GetPropertyChangedSignal("PreferredInput"), updateDevice)
 updateDevice()
