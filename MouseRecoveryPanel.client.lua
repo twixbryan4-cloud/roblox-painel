@@ -514,6 +514,12 @@ closeButton.Activated:Connect(function()
     setPanelOpen(false)
 end)
 
+local dragging = false
+local dragMoved = false
+local dragInput
+local dragStart
+local buttonStart
+
 floatingButton.Activated:Connect(function()
     if dragMoved then
         dragMoved = false
@@ -521,12 +527,6 @@ floatingButton.Activated:Connect(function()
     end
     setPanelOpen(true)
 end)
-
-local dragging = false
-local dragMoved = false
-local dragInput
-local dragStart
-local buttonStart
 
 floatingButton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
