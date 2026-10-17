@@ -1,4 +1,4 @@
-# delta-project — Video reference panel 0.3.0
+# delta-project — Video reference panel 0.4.0
 
 Painel Lua independente recriado a partir das imagens e dos dois videos enviados.
 Mantem o visual preto compacto, categorias na lateral, controles em duas colunas,
@@ -10,7 +10,7 @@ Codigo: `delta-project/main.lua`, branch `delta-project-zero` do repositorio
 ## Executar e comparar com o video
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/twixbryan4-cloud/roblox-painel/delta-project-zero/delta-project/main.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/twixbryan4-cloud/roblox-painel/delta-project-zero/delta-project/main.lua?v=0.4.0"))()
 ```
 
 1. Toque em **Blue look**, na barra superior, para aplicar a composicao azul.
@@ -22,6 +22,40 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/twixbryan4-cloud/robl
 permite arrastar a janela, e arrastar a previa gira o avatar. Colunas e categorias
 tem rolagem independente e suporte a toque. Os efeitos comecam desativados;
 os presets os ativam em conjunto.
+
+## Fundo de video (0.4)
+
+O video enviado em `https://yourimageshare.com/ib/QCWIypZMTr` fica no fundo do
+painel principal, atras dos controles. O painel de previa do avatar conserva
+seu fundo escuro. A reproducao comeca habilitada, em loop e sem som.
+
+Em **Menu → Background**:
+
+- **Media:** Video, Image (um frame do mesmo video) ou Off.
+- **Framing:** Crop preenche a janela sem distorcer; Fit mostra o quadro completo.
+- **Darkness:** escurece a midia para manter as opcoes legiveis.
+- **Volume:** controla somente o som do fundo, independente de Music.
+- **Reload video:** tenta novamente, baixando novas copias dos arquivos.
+- O status informa download, carregamento e falhas de compatibilidade.
+
+O script baixa o WebM (VP8/Vorbis, 768 px, 24 fps, cerca de 2 MB), salva um
+cache e registra o arquivo com `getcustomasset` ou `getsynasset`. Se o decoder
+nao o carregar em 12 segundos, tenta o MP4 do link original. O poster JPEG
+do mesmo video permanece enquanto carrega e quando a reproducao falha.
+WebM e poster ficam em `delta-project/media/`; o MP4 alternativo depende
+da disponibilidade do provedor original. O clip completo e seus creditos
+foram preservados. Apenas uma instancia de VideoFrame e criada por vez.
+
+O ambiente precisa permitir download, escrita de arquivo e registro de asset
+local; o decoder tambem precisa aceitar o video. Essas funcoes nao fazem parte
+da API normal de um LocalScript. A presenca de `getcustomasset` sozinha nao
+comprova suporte a video. No Delta, a compatibilidade real precisa ser testada
+no dispositivo. O painel continua utilizavel se a midia nao carregar.
+
+Ocultar a janela pausa video e audio. Reabrir retoma. Off, troca para Image,
+reexecucao e unload encerram o decoder anterior. Os arquivos de cache
+`delta-project.bg-qcwiypzmtr-1.*` persistem para evitar downloads repetidos;
+eles sao separados dos arquivos JSON de configuracao.
 
 ## Acrescentado apos a analise dos videos
 
@@ -49,7 +83,7 @@ os presets os ativam em conjunto.
 - **Models:** previa, silhueta branca, rotacao, chapeu e halo.
 - **Emotes / Animations:** emotes disponiveis no avatar, velocidade e parada.
 - **Helpers:** atualizar avatar, restaurar ajustes, desativar efeitos e descarregar.
-- **Menu:** tecla, escala, transparencia, qualidade, arte da lateral e configuracoes.
+- **Menu:** tecla, escala, transparencia, qualidade, arte, fundo de video e configuracoes.
 - **Music:** audio por ID, pausa, volume e repeticao.
 
 Os efeitos sao locais. `Self` seleciona seu personagem. `Others` seleciona os
@@ -96,6 +130,10 @@ arquivos originais.
 
 ## Validacao realizada
 
+- Midia: formato WebM, duracao e decodificacao local conferidos com FFmpeg.
+- Fluxo de carregamento, cache, troca de formato, pausa, reabertura e unload
+  verificados com API simulada, sem garantir suporte do decoder no Delta.
+
 - Compilacao em Lua 5.4 e testes de contrato com uma API Roblox simulada.
 - Dez categorias, callbacks, toque ativo, seletor de cor e selecao multipla.
 - Presets, criacao e encerramento de geometria, ciclos de animacao, rastro por
@@ -114,4 +152,6 @@ APIs consultadas: [ViewportFrame](https://create.roblox.com/docs/reference/engin
 [Trail](https://create.roblox.com/docs/reference/engine/classes/Trail),
 [CFrame](https://create.roblox.com/docs/reference/engine/datatypes/CFrame),
 [RaycastParams](https://create.roblox.com/docs/reference/engine/datatypes/RaycastParams) e
-[Player](https://create.roblox.com/docs/reference/engine/classes/Player).
+[Player](https://create.roblox.com/docs/reference/engine/classes/Player),
+[VideoFrame](https://create.roblox.com/docs/reference/engine/classes/VideoFrame) e
+[getcustomasset](https://docs.sunc.io/Filesystem/getcustomasset/).
