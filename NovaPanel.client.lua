@@ -1,7 +1,7 @@
--- NOVA / Camera Panel v1.1
+-- NOVA / Camera Panel v1.2
 -- LocalScript: StarterPlayer > StarterPlayerScripts.
 -- Um arquivo, sem imagens remotas, sem inputs virtuais e sem pulo automatico.
--- Ajusta o giro da camera com APIs publicas, sem exigir PlayerModule/CameraInput.
+-- Camera propria em Scriptable, entrada direta e protecao contra deltas de lag.
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -18,7 +18,7 @@ local player = Players.LocalPlayer
 if not player then return end
 local playerGui = player:WaitForChild("PlayerGui")
 local GUI_NAME = "NovaCameraPanel"
-local MIN_SENSITIVITY, MAX_SENSITIVITY, STEP = 0.25, 3, 0.05
+local MIN_SENSITIVITY, MAX_SENSITIVITY, STEP = 0.1, 5, 0.1
 local initialSensitivity = 1
 
 -- Reexecutar substitui a instancia anterior e restaura sua integracao de camera.
@@ -48,7 +48,8 @@ local alive, booting, opened, cameraReady = true, true, false, false
 local sensitivity = initialSensitivity
 local connections, activeTweens, pendingTasks = {}, {}, {}
 local restoreCamera
-local updateCameraBinding
+local syncCameraPointer
+local displayedSensitivity
 local transitionId = 0
 local drag, sliderPointer
 local lastFloatingDrag = -math.huge
@@ -197,7 +198,7 @@ end
 local panel = make("CanvasGroup", {
     Name = "Panel", AnchorPoint = Vector2.new(0.5, 0.5),
     BackgroundColor3 = C.background, BackgroundTransparency = 1,
-    BorderSizePixel = 0, Size = UDim2.fromOffset(500, 394),
+    BorderSizePixel = 0, Size = UDim2.fromOffset(500, 438),
     GroupColor3 = Color3.new(1, 1, 1), GroupTransparency = 1, Visible = false,
 }, root)
 round(panel, 22)
@@ -272,7 +273,7 @@ local subtitle = text(hero, "Encontre o movimento que combina com você.", 12, C
 
 local card = make("Frame", {
     Name = "Sensitivity", BackgroundColor3 = C.surface, BackgroundTransparency = 0.45,
-    BorderSizePixel = 0, Size = UDim2.new(1, 0, 0, 184), LayoutOrder = 2,
+    BorderSizePixel = 0, Size = UDim2.new(1, 0, 0, 228), LayoutOrder = 2,
 }, body)
 round(card, 16)
 stroke(card, C.line, 0.55)
@@ -325,20 +326,36 @@ local knob = make("Frame", {
 }, track)
 round(knob, 20)
 stroke(knob, C.cyan, 0.25, 2)
-text(card, "0,25×  ·  PRECISA", 9, C.muted, UDim2.fromOffset(18, 109),
+text(card, "0,1×  ·  PRECISA", 9, C.muted, UDim2.fromOffset(18, 109),
     UDim2.new(0.5, -18, 0, 15), Enum.Font.GothamMedium)
-local upperLimit = text(card, "RÁPIDA  ·  3×", 9, C.muted, UDim2.new(0.5, 0, 0, 109),
+local upperLimit = text(card, "RÁPIDA  ·  5×", 9, C.muted, UDim2.new(0.5, 0, 0, 109),
     UDim2.new(0.5, -18, 0, 15), Enum.Font.GothamMedium)
 upperLimit.TextXAlignment = Enum.TextXAlignment.Right
 
+local decrease = button(card, "Diminuir01", UDim2.fromOffset(18, 128),
+    UDim2.fromOffset(54, 44))
+local increase = button(card, "Aumentar01", UDim2.new(1, -72, 0, 128),
+    UDim2.fromOffset(54, 44))
+for _, item in ipairs({ { decrease, "− 0,1" }, { increase, "+ 0,1" } }) do
+    round(item[1], 10)
+    item[1].BackgroundTransparency = 0.3
+    stroke(item[1], C.line, 0.6)
+    local caption = text(item[1], item[2], 12, C.cyan,
+        UDim2.fromScale(0, 0), UDim2.fromScale(1, 1), Enum.Font.GothamMedium)
+    caption.TextXAlignment = Enum.TextXAlignment.Center
+end
+local precisionHint = text(card, "Passos de 0,1×", 11, C.muted,
+    UDim2.fromOffset(78, 128), UDim2.new(1, -156, 0, 44))
+precisionHint.TextXAlignment = Enum.TextXAlignment.Center
+
 local presets = {}
 for i, preset in ipairs({
-    { value = 0.5, title = "0,5×" }, { value = 1, title = "1×  ·  padrão" },
-    { value = 2, title = "2×" },
+    { value = 0.5, title = "0,5×" }, { value = 1, title = "1×" },
+    { value = 2, title = "2×" }, { value = 5, title = "5×" },
 }) do
     local presetButton = button(card, "Preset" .. i,
-        UDim2.new((i - 1) / 3, 18 - (i - 1) * 10, 0, 137),
-        UDim2.new(1 / 3, -20, 0, 32))
+        UDim2.new((i - 1) / 4, 18 - (i - 1) * 7, 0, 180),
+        UDim2.new(1 / 4, -15, 0, 32))
     presetButton.BackgroundTransparency = 0.3
     round(presetButton, 9)
     local outline = stroke(presetButton, C.line, 0.6)
@@ -434,7 +451,7 @@ local firstLayout = true
 local function reflow()
     local size = canvasSize()
     local width, height = math.min(500, math.max(220, size.X - 28)),
-        math.min(394, math.max(180, size.Y - 24))
+        math.min(438, math.max(180, size.Y - 24))
     panel.Size = UDim2.fromOffset(width, height)
     local center = firstLayout and size / 2
         or Vector2.new(panel.Position.X.Offset, panel.Position.Y.Offset)
@@ -481,11 +498,12 @@ updateDevice()
 local function setSensitivity(value, smooth)
     if not alive or type(value) ~= "number" or value ~= value then return end
     value = math.clamp(value, MIN_SENSITIVITY, MAX_SENSITIVITY)
-    sensitivity = math.clamp(MIN_SENSITIVITY
-        + math.floor((value - MIN_SENSITIVITY) / STEP + 0.5) * STEP,
+    sensitivity = math.clamp(math.floor(value / STEP + 0.5) * STEP,
         MIN_SENSITIVITY, MAX_SENSITIVITY)
+    if displayedSensitivity and math.abs(displayedSensitivity - sensitivity) < 0.00001 then return end
+    displayedSensitivity = sensitivity
     gui:SetAttribute("Sensitivity", sensitivity)
-    valueLabel.Text = string.format("%.2f×", sensitivity):gsub("%.", ",")
+    valueLabel.Text = string.format("%.1f×", sensitivity):gsub("%.", ",")
     local alpha = (sensitivity - MIN_SENSITIVITY) / (MAX_SENSITIVITY - MIN_SENSITIVITY)
     if smooth then
         animate(fill, { Size = UDim2.fromScale(alpha, 1) }, 0.18)
@@ -510,9 +528,10 @@ local function setSensitivity(value, smooth)
             }, 0.16)
         end
     end
-    if updateCameraBinding then updateCameraBinding() end
 end
 setSensitivity(sensitivity, false)
+connect(decrease.Activated, function() setSensitivity(sensitivity - STEP, true) end)
+connect(increase.Activated, function() setSensitivity(sensitivity + STEP, true) end)
 for _, preset in ipairs(presets) do
     connect(preset.button.Activated, function()
         setSensitivity(preset.value, true)
@@ -522,6 +541,7 @@ end
 local function setOpen(wantOpen)
     if not alive or booting then return end
     opened = wantOpen
+    if syncCameraPointer then syncCameraPointer() end
     transitionId = transitionId + 1
     local token = transitionId
     drag, sliderPointer = nil, nil
@@ -629,29 +649,116 @@ connect(UserInputService.InputBegan, function(input, processed)
     end
 end)
 
--- Mede o giro que a camera padrao realmente produziu e ajusta somente esse giro.
--- Nao depende de require em modulos internos, nao captura cliques e nao altera
--- CameraType, MouseBehavior ou a sensibilidade salva na conta.
-local BEFORE_CAMERA, AFTER_CAMERA = GUI_NAME .. "_Before", GUI_NAME .. "_After"
-local cameraTouches = {}
-local mousePanning, stickMagnitude, inputMoved, focused = false, 0, false, true
-local bound, sampledCamera, sampledFrame = false, nil, nil
+-- Um unico controlador: entrada direta, sem ler o giro produzido por outros scripts.
+-- Scriptable desliga a camera padrao; a prioridade final aplica a orientacao NOVA.
+local CAMERA_BINDING = GUI_NAME .. "_Controller"
+local LAG_FRAME, STALE_INPUT = 0.1, 0.12
+local MAX_TURN_SPEED, MOUSE_SCALE = math.rad(720), math.rad(0.18)
+local PITCH_LIMIT = math.rad(80)
 local atan2 = math.atan2 or math.atan
-local pitchLimit = math.rad(80)
+local originalMouse = UserInputService.MouseBehavior
+local originalIcon = UserInputService.MouseIconEnabled
+local savedTypes = setmetatable({}, { __mode = "k" })
+local previousCameraFlag = player:GetAttribute("NovaCameraActive")
+player:SetAttribute("NovaCameraActive", true)
+local initialCamera = workspace.CurrentCamera
+local initialFrame = initialCamera and initialCamera.CFrame or CFrame.new(0, 3, 12)
+local lastFocus = initialCamera and initialCamera.Focus.Position or Vector3.new(0, 2, 0)
+local initialLook = initialFrame.LookVector
+local yaw = atan2(-initialLook.X, -initialLook.Z)
+local pitch = math.clamp(math.asin(math.clamp(initialLook.Y, -1, 1)), -PITCH_LIMIT, PITCH_LIMIT)
+local rotation = CFrame.fromOrientation(pitch, yaw, 0)
+local minZoom = math.max(0.5, player.CameraMinZoomDistance)
+local maxZoom = math.max(minZoom, math.min(128, player.CameraMaxZoomDistance))
+local zoom = math.clamp((initialFrame.Position - lastFocus).Magnitude, minZoom, maxZoom)
+local actualZoom, safeZoom = zoom, zoom
+local pendingYaw, pendingPitch, inputStamp = 0, 0, 0
+local cameraTouches, touchTotal, lastPinch = {}, 0, nil
+local mousePanning, focused = false, true
+local shiftLocked = originalMouse == Enum.MouseBehavior.LockCenter
+local firstPerson, characterHidden = false, false
+local stickX, stickY = 0, 0
+local character, rootPart, headPart, humanoid
+local subjectConnections, hiddenParts = {}, {}
+local touchScaleX, touchScaleY
+local castElapsed, lastFrameFocus = 1, nil
+local heightOffset = Vector3.new(0, 1.5, 0)
 local collision = RaycastParams.new()
 collision.FilterType = Enum.RaycastFilterType.Exclude
 collision.RespectCanCollide = true
 collision.IgnoreWater = true
-local function refreshCollisionFilter(character)
-    collision.FilterDescendantsInstances = character and { character } or {}
-end
-refreshCollisionFilter(player.Character)
-connect(player.CharacterAdded, refreshCollisionFilter)
 
-local function touchCount()
-    local count = 0
-    for _ in pairs(cameraTouches) do count = count + 1 end
-    return count
+local function clearMotion()
+    pendingYaw, pendingPitch, stickX, stickY = 0, 0, 0, 0
+end
+local function refreshTouchScale()
+    local size = canvasSize()
+    touchScaleX = math.pi / math.max(320, size.X)
+    touchScaleY = (math.pi * 0.75) / math.max(240, size.Y)
+end
+refreshTouchScale()
+connect(root:GetPropertyChangedSignal("AbsoluteSize"), refreshTouchScale)
+
+local function restoreVisibility()
+    for part, previousValue in pairs(hiddenParts) do
+        if part.Parent and part.LocalTransparencyModifier == 1 then
+            part.LocalTransparencyModifier = previousValue
+        end
+    end
+    hiddenParts = {}
+end
+local function hidePart(part)
+    if not part:IsA("BasePart") or hiddenParts[part] ~= nil then return end
+    local ancestor = part.Parent
+    while ancestor and ancestor ~= character do
+        if ancestor:IsA("Tool") then return end
+        ancestor = ancestor.Parent
+    end
+    hiddenParts[part] = part.LocalTransparencyModifier
+    part.LocalTransparencyModifier = 1
+end
+local function setCharacterHidden(hide)
+    if hide == characterHidden then return end
+    characterHidden = hide
+    if hide and character then
+        for _, part in ipairs(character:GetDescendants()) do hidePart(part) end
+    else
+        restoreVisibility()
+    end
+end
+local function cacheCharacter(nextCharacter)
+    restoreVisibility()
+    characterHidden = false
+    for _, connection in ipairs(subjectConnections) do connection:Disconnect() end
+    subjectConnections = {}
+    character, rootPart, headPart, humanoid = nextCharacter, nil, nil, nil
+    collision.FilterDescendantsInstances = character and { character } or {}
+    lastFrameFocus, castElapsed = nil, 1
+    if not character then return end
+    local function resolve()
+        rootPart = character:FindFirstChild("HumanoidRootPart")
+        headPart = character:FindFirstChild("Head")
+        humanoid = character:FindFirstChildOfClass("Humanoid")
+    end
+    resolve()
+    subjectConnections[1] = character.ChildAdded:Connect(resolve)
+    subjectConnections[2] = character.DescendantAdded:Connect(function(part)
+        if characterHidden then hidePart(part) end
+    end)
+end
+cacheCharacter(player.Character)
+connect(player.CharacterAdded, cacheCharacter)
+connect(player.CharacterRemoving, function() clearMotion(); cacheCharacter(nil) end)
+
+local function claimCamera()
+    local camera = workspace.CurrentCamera
+    if camera then
+        if savedTypes[camera] == nil then savedTypes[camera] = camera.CameraType end
+        if camera.CameraType ~= Enum.CameraType.Scriptable then
+            camera.CameraType = Enum.CameraType.Scriptable
+        end
+    end
+    return camera
 end
 local function overInterface(input)
     local point = pointerPosition(input)
@@ -666,118 +773,203 @@ local function overInterface(input)
     end
     return false
 end
-local function beforeCamera()
-    sampledCamera, sampledFrame = nil, nil
-    local moved = inputMoved or stickMagnitude > 0.05
-    inputMoved = false
-    if not moved or not focused or GuiService.MenuIsOpen
-        or UserInputService:GetFocusedTextBox() then return end
-    if touchCount() > 1 then return end -- Deixa o gesto de zoom com dois dedos em paz.
-    local camera = workspace.CurrentCamera
-    if not camera or camera.CameraType == Enum.CameraType.Scriptable then return end
-    sampledCamera, sampledFrame = camera, camera.CFrame
-end
-local function afterCamera()
-    local camera, previousFrame = sampledCamera, sampledFrame
-    sampledCamera, sampledFrame = nil, nil
-    if not camera or camera ~= workspace.CurrentCamera or not previousFrame
-        or camera.CameraType == Enum.CameraType.Scriptable then return end
-    if math.abs(sensitivity - 1) < 0.001 then return end
-    local current = camera.CFrame
-    local beforeLook, afterLook = previousFrame.LookVector, current.LookVector
-    local oldYaw = atan2(-beforeLook.X, -beforeLook.Z)
-    local newYaw = atan2(-afterLook.X, -afterLook.Z)
-    local oldPitch = math.asin(math.clamp(beforeLook.Y, -1, 1))
-    local newPitch = math.asin(math.clamp(afterLook.Y, -1, 1))
-    local yawDelta = atan2(math.sin(newYaw - oldYaw), math.cos(newYaw - oldYaw))
-    local pitchDelta = newPitch - oldPitch
-    if math.abs(yawDelta) + math.abs(pitchDelta) < 0.000001 then return end
-    -- Trocas abruptas de camera/cenas nao devem receber o multiplicador.
-    if math.abs(yawDelta) > math.rad(85) or math.abs(pitchDelta) > math.rad(85) then return end
-    local rotation = CFrame.fromOrientation(
-        math.clamp(oldPitch + pitchDelta * sensitivity, -pitchLimit, pitchLimit),
-        oldYaw + yawDelta * sensitivity, 0)
-    local adjustment = rotation * current.Rotation:Inverse()
-    local pivot = camera.Focus.Position
-    local offset = adjustment:VectorToWorldSpace(current.Position - pivot)
-    local distance = offset.Magnitude
-    if distance > 0.75 then
-        local hit = workspace:Raycast(pivot, offset, collision)
-        if hit and hit.Distance < distance then
-            offset = offset * (math.max(0.1, hit.Distance - 0.2) / distance)
+syncCameraPointer = function()
+    local behavior = Enum.MouseBehavior.Default
+    local hideIcon = false
+    if focused and not booting and not GuiService.MenuIsOpen
+        and not UserInputService:GetFocusedTextBox()
+        and UserInputService.PreferredInput == Enum.PreferredInput.KeyboardAndMouse then
+        if mousePanning then
+            behavior = Enum.MouseBehavior.LockCurrentPosition
+        elseif not opened and (firstPerson or shiftLocked) then
+            behavior, hideIcon = Enum.MouseBehavior.LockCenter, true
         end
     end
-    camera.CFrame = CFrame.new(pivot + offset) * rotation
+    if UserInputService.MouseBehavior ~= behavior then UserInputService.MouseBehavior = behavior end
+    local icon = originalIcon
+    if hideIcon then icon = false end
+    if UserInputService.MouseIconEnabled ~= icon then UserInputService.MouseIconEnabled = icon end
 end
-updateCameraBinding = function()
-    local locked = UserInputService.MouseBehavior ~= Enum.MouseBehavior.Default
-    local needed = alive and focused and math.abs(sensitivity - 1) >= 0.001
-        and (touchCount() == 1 or mousePanning or locked or stickMagnitude > 0.05)
-    if needed == bound then return end
-    bound = needed
-    sampledCamera, sampledFrame, inputMoved = nil, nil, false
-    if needed then
-        RunService:BindToRenderStep(BEFORE_CAMERA, Enum.RenderPriority.Camera.Value - 1, beforeCamera)
-        RunService:BindToRenderStep(AFTER_CAMERA, Enum.RenderPriority.Camera.Value + 1, afterCamera)
-    else
-        RunService:UnbindFromRenderStep(BEFORE_CAMERA)
-        RunService:UnbindFromRenderStep(AFTER_CAMERA)
+local function queueMotion(dx, dy, scaleX, scaleY)
+    if not focused or GuiService.MenuIsOpen or UserInputService:GetFocusedTextBox() then return end
+    pendingYaw = pendingYaw - dx * scaleX
+    pendingPitch = pendingPitch - dy * scaleY
+    inputStamp = os.clock()
+end
+local function clampZoom(value)
+    zoom = math.clamp(value, minZoom, maxZoom)
+end
+local function pinchDistance()
+    local first, second
+    for _, touch in pairs(cameraTouches) do
+        if first then second = touch; break else first = touch end
     end
+    if not second then return nil end
+    local dx, dy = first.x - second.x, first.y - second.y
+    return math.sqrt(dx * dx + dy * dy)
 end
 connect(UserInputService.InputBegan, function(input, processed)
+    if booting or processed or GuiService.MenuIsOpen or UserInputService:GetFocusedTextBox() then return end
+    if input.KeyCode == Enum.KeyCode.LeftShift and player.DevEnableMouseLock then
+        shiftLocked = not shiftLocked
+        syncCameraPointer()
+        return
+    end
     if input.UserInputType ~= Enum.UserInputType.Touch
         and input.UserInputType ~= Enum.UserInputType.MouseButton2 then return end
-    if processed or booting or GuiService.MenuIsOpen or overInterface(input) then return end
+    if overInterface(input) then return end
     if input.UserInputType == Enum.UserInputType.Touch then
         local point, size = pointerPosition(input), canvasSize()
-        -- Evita a area usual do joystick, mesmo quando ele nao marca o toque como processado.
         if point.X < size.X * 0.4 and point.Y > size.Y * 0.5 then return end
-        cameraTouches[input] = Vector2.new(input.Position.X, input.Position.Y)
-    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+        if not cameraTouches[input] then
+            cameraTouches[input] = { x = input.Position.X, y = input.Position.Y }
+            touchTotal = touchTotal + 1
+        end
+        if touchTotal > 1 then
+            pendingYaw, pendingPitch = 0, 0
+            lastPinch = pinchDistance()
+        end
+    else
         mousePanning = true
+        syncCameraPointer()
     end
-    updateCameraBinding()
 end)
 connect(UserInputService.InputChanged, function(input, processed)
-    local last = cameraTouches[input]
-    if last then
-        local point = Vector2.new(input.Position.X, input.Position.Y)
-        if touchCount() == 1 and (point - last).Magnitude > 0 then inputMoved = true end
-        cameraTouches[input] = point
+    local touch = cameraTouches[input]
+    if touch then
+        local dx, dy = input.Position.X - touch.x, input.Position.Y - touch.y
+        touch.x, touch.y = input.Position.X, input.Position.Y
+        if touchTotal == 1 then
+            queueMotion(dx, dy, touchScaleX, touchScaleY)
+        else
+            local current = pinchDistance()
+            if lastPinch and current and lastPinch > 4 and current > 4 then
+                clampZoom(zoom * lastPinch / current)
+            end
+            lastPinch = current
+        end
     elseif input.UserInputType == Enum.UserInputType.MouseMovement then
         if not drag and not sliderPointer and (mousePanning
-            or UserInputService.MouseBehavior ~= Enum.MouseBehavior.Default) then
-            inputMoved = true
+            or (not opened and (firstPerson or shiftLocked))) then
+            queueMotion(input.Delta.X, input.Delta.Y, MOUSE_SCALE, MOUSE_SCALE)
+        end
+    elseif input.UserInputType == Enum.UserInputType.MouseWheel then
+        if not processed and not overInterface(input) then
+            clampZoom(zoom - input.Position.Z * math.max(0.5, zoom * 0.15))
         end
     elseif input.KeyCode == Enum.KeyCode.Thumbstick2 then
-        stickMagnitude = processed and 0 or input.Position.Magnitude
-        updateCameraBinding()
+        stickX, stickY = 0, 0
+        if not processed then
+            stickX = math.abs(input.Position.X) > 0.12 and input.Position.X or 0
+            stickY = math.abs(input.Position.Y) > 0.12 and input.Position.Y or 0
+        end
     end
 end)
 connect(UserInputService.InputEnded, function(input)
-    cameraTouches[input] = nil
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then mousePanning = false end
-    if input.KeyCode == Enum.KeyCode.Thumbstick2 then stickMagnitude = 0 end
-    updateCameraBinding()
+    if cameraTouches[input] then
+        cameraTouches[input] = nil
+        touchTotal = math.max(0, touchTotal - 1)
+        pendingYaw, pendingPitch, lastPinch = 0, 0, nil
+        for object, touch in pairs(cameraTouches) do
+            touch.x, touch.y = object.Position.X, object.Position.Y
+        end
+    end
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        mousePanning = false
+        syncCameraPointer()
+    elseif input.KeyCode == Enum.KeyCode.Thumbstick2 then
+        stickX, stickY = 0, 0
+    end
 end)
-connect(UserInputService:GetPropertyChangedSignal("MouseBehavior"), updateCameraBinding)
 connect(UserInputService.WindowFocusReleased, function()
-    cameraTouches, mousePanning, stickMagnitude, focused = {}, false, 0, false
-    updateCameraBinding()
+    focused, mousePanning, cameraTouches, touchTotal, lastPinch = false, false, {}, 0, nil
+    clearMotion()
+    syncCameraPointer()
 end)
-connect(UserInputService.WindowFocused, function()
-    focused = true
-    updateCameraBinding()
-end)
-restoreCamera = function()
-    RunService:UnbindFromRenderStep(BEFORE_CAMERA)
-    RunService:UnbindFromRenderStep(AFTER_CAMERA)
-    cameraTouches, sampledCamera, sampledFrame, bound = {}, nil, nil, false
+connect(UserInputService.WindowFocused, function() focused = true; syncCameraPointer() end)
+
+local function stepCamera(dt)
+    local camera = claimCamera()
+    if not camera then clearMotion(); return end
+    local now = os.clock()
+    local accepting = focused and not booting and not GuiService.MenuIsOpen
+        and not UserInputService:GetFocusedTextBox()
+    local inputIsFresh = now - inputStamp <= STALE_INPUT
+    local dx, dy = 0, 0
+    if accepting and dt <= LAG_FRAME then
+        if inputIsFresh then dx, dy = pendingYaw, pendingPitch end
+        local gamepadScale = math.rad(180) * math.min(dt, 1 / 30)
+        dx = (dx - stickX * gamepadScale) * sensitivity
+        dy = (dy + stickY * gamepadScale) * sensitivity
+        local magnitude = math.sqrt(dx * dx + dy * dy)
+        local limit = MAX_TURN_SPEED * math.min(dt, 1 / 30)
+        if magnitude > limit and magnitude > 0 then
+            dx, dy = dx * limit / magnitude, dy * limit / magnitude
+        end
+    end
+    -- O excedente e descartado, nunca fica numa fila girando depois da travada.
+    pendingYaw, pendingPitch = 0, 0
+    local turned = math.abs(dx) + math.abs(dy) > 0.000001
+    if turned then
+        yaw = atan2(math.sin(yaw + dx), math.cos(yaw + dx))
+        pitch = math.clamp(pitch + dy, -PITCH_LIMIT, PITCH_LIMIT)
+        rotation = CFrame.fromOrientation(pitch, yaw, 0)
+    end
+    local pivot = lastFocus
+    if rootPart and rootPart.Parent then
+        pivot = rootPart.Position + heightOffset
+        if humanoid then pivot = pivot + humanoid.CameraOffset end
+    elseif headPart and headPart.Parent then
+        pivot = headPart.Position
+    end
+    lastFocus = pivot
+    local requested = player.CameraMode == Enum.CameraMode.LockFirstPerson and 0.5 or zoom
+    local moved = not lastFrameFocus or (pivot - lastFrameFocus).Magnitude > 0.02
+    lastFrameFocus = pivot
+    castElapsed = castElapsed + math.min(dt, LAG_FRAME)
+    local interval = (turned or moved or math.abs(actualZoom - requested) > 0.05) and 0.05 or 0.25
+    if requested <= 0.75 then
+        safeZoom = requested
+    elseif castElapsed >= interval then
+        castElapsed = 0
+        local offset = rotation.LookVector * -requested
+        local hit = workspace:Raycast(pivot, offset, collision)
+        safeZoom = hit and math.max(0.35, hit.Distance - 0.25) or requested
+        safeZoom = math.min(requested, safeZoom)
+    end
+    local target = math.min(requested, safeZoom)
+    if target < actualZoom then
+        actualZoom = target
+    else
+        actualZoom = actualZoom + (target - actualZoom) * (1 - math.exp(-12 * math.min(dt, 0.05)))
+    end
+    firstPerson = actualZoom < 1
+    setCharacterHidden(firstPerson)
+    syncCameraPointer()
+    camera.CFrame = CFrame.new(pivot - rotation.LookVector * actualZoom) * rotation
+    camera.Focus = CFrame.new(pivot)
 end
+restoreCamera = function()
+    RunService:UnbindFromRenderStep(CAMERA_BINDING)
+    clearMotion()
+    cameraTouches, touchTotal = {}, 0
+    for _, connection in ipairs(subjectConnections) do connection:Disconnect() end
+    restoreVisibility()
+    for camera, cameraType in pairs(savedTypes) do
+        if camera.Parent and camera.CameraType == Enum.CameraType.Scriptable then
+            camera.CameraType = cameraType
+        end
+    end
+    UserInputService.MouseBehavior = originalMouse
+    UserInputService.MouseIconEnabled = originalIcon
+    player:SetAttribute("NovaCameraActive", previousCameraFlag)
+end
+claimCamera()
+RunService:BindToRenderStep(CAMERA_BINDING, Enum.RenderPriority.Last.Value + 1, stepCamera)
 cameraReady = true
-status.Text, statusDot.BackgroundColor3 = "Sensibilidade pronta", C.green
-updateCameraBinding()
+status.Text, statusDot.BackgroundColor3 = "Câmera NOVA ativa", C.green
 reflow()
+
 
 -- A abertura e curta; o resto da interface fica pronto antes de ser mostrado.
 animate(loader, { GroupTransparency = 0 }, 0.20)
