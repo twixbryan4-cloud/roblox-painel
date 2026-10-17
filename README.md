@@ -20,6 +20,10 @@ Painel em Lua (Luau) para usar **dentro da sua própria experiência** no Roblox
 
 A correção define `UserInputService.MouseBehavior` como `Default` e habilita o ícone do mouse. O comando é reaplicado por um curto período para tentar vencer um bloqueio momentâneo da câmera. A escala do painel se adapta a telas menores.
 
+## Desempenho e animações
+
+A interface reage a entradas e mudanças de tela, sem um loop contínuo por frame. As transições usam tweens curtos para suavizar o carregamento, abrir e fechar o painel e mostrar o botão flutuante.
+
 ## Limite importante
 
 Este é um LocalScript para colocar na sua experiência pelo Studio. Ele não é um executor nem altera outros jogos. Se um script de câmera do próprio jogo continuar forçando o mouse para `LockCenter` ou prendendo o jogador em primeira pessoa, ele pode travar o cursor novamente; nesse caso, será preciso ajustar a lógica dessa câmera.
