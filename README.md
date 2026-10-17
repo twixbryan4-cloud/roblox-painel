@@ -1,6 +1,6 @@
 # Mouse Recovery Panel
 
-Painel em Lua (Luau) para usar **dentro da sua própria experiência** no Roblox Studio. O script mostra uma tela de carregamento, abre um painel compacto e oferece um atalho para restaurar o cursor.
+Painel em Lua (Luau) para usar **dentro da sua própria experiência** no Roblox Studio. O painel tem as categorias **Info** e **Visual**, com um atalho para recuperar o cursor.
 
 ## Instalação no Roblox Studio
 
@@ -10,19 +10,20 @@ Painel em Lua (Luau) para usar **dentro da sua própria experiência** no Roblox
 4. Copie o conteúdo de [MouseRecoveryPanel.client.lua](./MouseRecoveryPanel.client.lua) para o LocalScript.
 5. Teste com **Play**.
 
-## Controles
+## Categorias e controles
 
-- **F6** é a tecla inicial para liberar o cursor. Clique no botão de tecla no painel e pressione outra tecla para trocar. **Esc** cancela a seleção.
-- O botão **−** no topo minimiza o painel.
-- O quadrado flutuante com **N** reabre o painel e pode ser arrastado pela tela (mouse ou toque).
-- **Right Shift** também mostra ou esconde o painel no teclado.
-- O botão **LIBERAR CURSOR** também executa a correção.
+- **Info** mostra dados do jogador atual: nome de exibição, usuário, UserId, idade da conta, ping e tipo de entrada/dispositivo.
+- O Roblox não fornece ao LocalScript o endereço IP nem a região de rede do jogador. Esses campos aparecem como indisponíveis.
+- **Visual** contém o botão para liberar o cursor e a escolha de tecla. **F6** é a tecla inicial; clique no campo de tecla e pressione outra. **Esc** cancela a seleção.
+- **Right Shift** mostra ou esconde o painel.
+- O botão **−** minimiza o painel. O botão flutuante **N** reabre e pode ser arrastado com mouse ou toque.
+- O cabeçalho mostra **FREE**, **by askzedd** e o tipo de entrada atual (MOBILE, PC ou GAMEPAD).
 
 A correção define `UserInputService.MouseBehavior` como `Default` e habilita o ícone do mouse. O comando é reaplicado por um curto período para tentar vencer um bloqueio momentâneo da câmera. A escala do painel se adapta a telas menores.
 
 ## Desempenho e animações
 
-A interface reage a entradas e mudanças de tela, sem um loop contínuo por frame. As transições usam tweens curtos para suavizar o carregamento, abrir e fechar o painel e mostrar o botão flutuante.
+A interface reage a entradas e mudanças de tela, sem um loop contínuo por frame. O ping só atualiza enquanto a categoria Info está aberta. As transições usam tweens curtos para suavizar o carregamento, abrir e fechar o painel, alternar categorias e mostrar o botão flutuante.
 
 ## Limite importante
 
