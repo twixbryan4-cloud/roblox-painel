@@ -68,7 +68,7 @@ local panel = Instance.new("Frame")
 panel.Name = "Panel"
 panel.AnchorPoint = Vector2.new(0.5, 0.5)
 panel.Position = UDim2.fromScale(0.5, 0.5)
-panel.Size = UDim2.fromScale(0.91, 0.85)
+panel.Size = UDim2.fromScale(0.92, 0.86)
 panel.BackgroundColor3 = C.ink
 panel.BackgroundTransparency = 1
 panel.BorderSizePixel = 0
@@ -140,14 +140,14 @@ dots.Padding = UDim.new(0, 7)
 dots.Parent = traffic
 
 local brand = label(header, "Velaware", 13, C.white, Enum.TextXAlignment.Center)
-brand.AnchorPoint = Vector2.new(0.5, 0)
-brand.Position = UDim2.new(0.5, 0, 0, 7)
-brand.Size = UDim2.new(0.42, 0, 0, 20)
+brand.TextXAlignment = Enum.TextXAlignment.Left
+brand.Position = UDim2.new(0, 106, 0, 7)
+brand.Size = UDim2.new(0.28, 0, 0, 20)
 brand.ZIndex = 5
 local gameName = label(header, "murder mystery 2", 10, C.muted, Enum.TextXAlignment.Center)
-gameName.AnchorPoint = Vector2.new(0.5, 0)
-gameName.Position = UDim2.new(0.5, 0, 0, 29)
-gameName.Size = UDim2.new(0.42, 0, 0, 16)
+gameName.TextXAlignment = Enum.TextXAlignment.Left
+gameName.Position = UDim2.new(0, 106, 0, 29)
+gameName.Size = UDim2.new(0.28, 0, 0, 16)
 gameName.ZIndex = 5
 local teamLabel = label(header, "Change Team", 10, C.muted, Enum.TextXAlignment.Right)
 teamLabel.AnchorPoint = Vector2.new(1, 0.5)
@@ -335,10 +335,25 @@ local function showCategory(name)
 	for category, button in pairs(categoryButtons) do
 		local active = category == name
 		button.BackgroundColor3 = active and C.plumLight or C.ink
-		button.BackgroundTransparency = active and 0.38 or 0.7
-		button.TextColor3 = active and C.white or C.muted
+		local targetColor = active and C.plumLight or C.ink
+		local targetTransparency = active and 0.48 or 0.78
+		TweenService:Create(button, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundColor3 = targetColor,
+			BackgroundTransparency = targetTransparency,
+			TextColor3 = active and C.white or C.muted,
+		}):Play()
 		local icon = button:FindFirstChild("CategoryIcon")
-		if icon then icon.TextColor3 = active and C.white or C.muted end
+		if icon then
+			TweenService:Create(icon, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				TextColor3 = active and C.white or C.muted,
+			}):Play()
+		end
+		local categoryName = button:FindFirstChild("CategoryName")
+		if categoryName then
+			TweenService:Create(categoryName, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				TextColor3 = active and C.white or C.muted,
+			}):Play()
+		end
 	end
 end
 
@@ -361,6 +376,7 @@ local function makeCategory(name, iconText, order)
 	icon.Size = UDim2.new(0, 29, 1, 0)
 	icon.ZIndex = 6
 	local title = label(button, name, 13, C.muted)
+	title.Name = "CategoryName"
 	title.Position = UDim2.new(0, 43, 0, 0)
 	title.Size = UDim2.new(1, -49, 1, 0)
 	title.ZIndex = 6
@@ -448,7 +464,7 @@ local function fitToViewport()
 		content.Position = UDim2.new(0.31, 2, 0, 9)
 		content.Size = UDim2.new(0.69, -16, 1, -18)
 	else
-		panel.Size = UDim2.fromScale(0.91, 0.85)
+		panel.Size = UDim2.fromScale(0.92, 0.86)
 		sidebar.Size = UDim2.new(0.29, -15, 1, -22)
 		content.Position = UDim2.new(0.30, 2, 0, 9)
 		content.Size = UDim2.new(0.70, -16, 1, -18)
