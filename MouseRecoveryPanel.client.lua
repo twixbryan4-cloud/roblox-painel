@@ -20,7 +20,7 @@ end
 
 local FIX_KEY = Enum.KeyCode.F6
 local PANEL_KEY = Enum.KeyCode.RightShift
-local VIDEO_ASSET_ID = "" -- Exemplo: "rbxassetid://1234567890"
+local VIDEO_ASSET_ID = "https://vt.tiktok.com/ZSgYQECos/" -- Troque por rbxassetid://ID se o Roblox não aceitar o link
 local choosingKey = false
 local isFixing = false
 
@@ -236,7 +236,16 @@ if VIDEO_ASSET_ID ~= "" then
     backgroundVideo.Loaded:Connect(function()
         backgroundVideo:Play()
     end)
-    backgroundVideo.Video = VIDEO_ASSET_ID
+
+    local videoSourceAccepted = pcall(function()
+        backgroundVideo.Video = VIDEO_ASSET_ID
+    end)
+
+    if not videoSourceAccepted then
+        backgroundVideo.Visible = false
+        videoTint.Visible = false
+        warn("[NOVA] O Roblox não aceitou o link externo de vídeo. Substitua VIDEO_ASSET_ID por um ID rbxassetid://.")
+    end
 end
 
 addCorner(panel, 22)
