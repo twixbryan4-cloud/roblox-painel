@@ -241,58 +241,103 @@ end
 workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(watchCurrentCamera)
 watchCurrentCamera()
 
+-- Cabeçalho do painel
 local header = create("Frame", panel, {
     BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(24, 21),
-    Size = UDim2.new(1, -48, 0, 51),
+    Position = UDim2.fromOffset(20, 14),
+    Size = UDim2.new(1, -40, 0, 48),
 })
 
 local logo = create("Frame", header, {
-    Size = UDim2.fromOffset(44, 44),
+    Size = UDim2.fromOffset(36, 36),
     BackgroundColor3 = COLORS.card,
     BorderSizePixel = 0,
 })
-addCorner(logo, 14)
+addCorner(logo, 12)
 addStroke(logo, COLORS.accent, 0.3, 1)
 create("UIGradient", logo, {
     Color = ColorSequence.new(COLORS.accent, COLORS.accent2),
     Rotation = 35,
 })
-
 create("TextLabel", logo, {
     BackgroundTransparency = 1,
     Size = UDim2.fromScale(1, 1),
     Font = Enum.Font.GothamBold,
     Text = "N",
     TextColor3 = COLORS.accent,
-    TextSize = 22,
+    TextSize = 19,
 })
 
 create("TextLabel", header, {
     BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(57, 0),
-    Size = UDim2.new(1, -110, 0, 24),
+    Position = UDim2.fromOffset(45, 0),
+    Size = UDim2.fromOffset(69, 21),
     Font = Enum.Font.GothamBold,
-    Text = "Mouse Recovery",
+    Text = "NOVA",
     TextColor3 = COLORS.text,
-    TextSize = 18,
+    TextSize = 16,
     TextXAlignment = Enum.TextXAlignment.Left,
 })
 
 create("TextLabel", header, {
     BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(58, 25),
-    Size = UDim2.new(1, -110, 0, 18),
+    Position = UDim2.fromOffset(46, 20),
+    Size = UDim2.fromOffset(72, 15),
     Font = Enum.Font.Gotham,
-    Text = "ATALHO RÁPIDO PARA O CURSOR",
+    Text = "by askzedd",
     TextColor3 = COLORS.muted,
     TextSize = 9,
     TextXAlignment = Enum.TextXAlignment.Left,
 })
 
+local freeBadge = create("Frame", header, {
+    Position = UDim2.fromOffset(119, 6),
+    Size = UDim2.fromOffset(53, 24),
+    BackgroundColor3 = Color3.fromRGB(45, 52, 74),
+    BorderSizePixel = 0,
+})
+addCorner(freeBadge, 10)
+create("TextLabel", freeBadge, {
+    BackgroundTransparency = 1,
+    Size = UDim2.fromScale(1, 1),
+    Font = Enum.Font.GothamBold,
+    Text = "FREE",
+    TextColor3 = Color3.fromRGB(211, 218, 238),
+    TextSize = 10,
+})
+
+local deviceBadge = create("Frame", header, {
+    Position = UDim2.fromOffset(178, 6),
+    Size = UDim2.fromOffset(76, 24),
+    BackgroundColor3 = Color3.fromRGB(33, 73, 85),
+    BorderSizePixel = 0,
+})
+addCorner(deviceBadge, 10)
+local deviceBadgeText = create("TextLabel", deviceBadge, {
+    BackgroundTransparency = 1,
+    Size = UDim2.fromScale(1, 1),
+    Font = Enum.Font.GothamBold,
+    TextColor3 = COLORS.accent,
+    TextSize = 9,
+})
+
+local function getDeviceLabel()
+    if UserInputService.PreferredInput == Enum.PreferredInput.Touch then
+        return "MOBILE"
+    elseif UserInputService.PreferredInput == Enum.PreferredInput.Gamepad then
+        return "GAMEPAD"
+    end
+    return "PC"
+end
+
+deviceBadgeText.Text = getDeviceLabel()
+UserInputService:GetPropertyChangedSignal("PreferredInput"):Connect(function()
+    deviceBadgeText.Text = getDeviceLabel()
+end)
+
 local closeButton = create("TextButton", header, {
     AnchorPoint = Vector2.new(1, 0),
-    Position = UDim2.new(1, 0, 0, 2),
+    Position = UDim2.new(1, 0, 0, 1),
     Size = UDim2.fromOffset(36, 36),
     BackgroundColor3 = COLORS.card,
     BorderSizePixel = 0,
@@ -300,29 +345,166 @@ local closeButton = create("TextButton", header, {
     Font = Enum.Font.GothamSemibold,
     Text = "−",
     TextColor3 = COLORS.accent,
-    TextSize = 26,
+    TextSize = 25,
 })
 addCorner(closeButton, 12)
 
 create("Frame", panel, {
-    Position = UDim2.new(0, 24, 0, 86),
-    Size = UDim2.new(1, -48, 0, 1),
+    Position = UDim2.new(0, 20, 0, 73),
+    Size = UDim2.new(1, -40, 0, 1),
     BackgroundColor3 = Color3.fromRGB(48, 56, 77),
     BackgroundTransparency = 0.45,
     BorderSizePixel = 0,
 })
 
-local statusCard = create("Frame", panel, {
-    Position = UDim2.fromOffset(24, 105),
-    Size = UDim2.new(1, -48, 0, 57),
+-- Navegação por categorias
+local sidebar = create("Frame", panel, {
+    Position = UDim2.fromOffset(20, 89),
+    Size = UDim2.fromOffset(116, 246),
+    BackgroundTransparency = 1,
+})
+
+local content = create("CanvasGroup", panel, {
+    Position = UDim2.fromOffset(146, 87),
+    Size = UDim2.new(1, -166, 0, 248),
+    BackgroundTransparency = 1,
+    GroupTransparency = 0,
+    BorderSizePixel = 0,
+})
+
+local function makeCategoryButton(text, y)
+    local button = create("TextButton", sidebar, {
+        Position = UDim2.fromOffset(0, y),
+        Size = UDim2.new(1, 0, 0, 40),
+        BackgroundColor3 = COLORS.card,
+        BackgroundTransparency = 0.25,
+        BorderSizePixel = 0,
+        AutoButtonColor = false,
+        Font = Enum.Font.GothamSemibold,
+        Text = "   " .. text,
+        TextColor3 = COLORS.muted,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+    })
+    addCorner(button, 12)
+    return button
+end
+
+local infoTab = makeCategoryButton("ⓘ  Info", 3)
+local visualTab = makeCategoryButton("◉  Visual", 50)
+
+local infoPage = create("Frame", content, {
+    Name = "InfoPage",
+    Size = UDim2.fromScale(1, 1),
+    BackgroundTransparency = 1,
+    Visible = true,
+})
+
+local visualPage = create("Frame", content, {
+    Name = "VisualPage",
+    Size = UDim2.fromScale(1, 1),
+    BackgroundTransparency = 1,
+    Visible = false,
+})
+
+create("TextLabel", infoPage, {
+    BackgroundTransparency = 1,
+    Size = UDim2.new(1, 0, 0, 20),
+    Font = Enum.Font.GothamBold,
+    Text = "PLAYER INFO",
+    TextColor3 = COLORS.text,
+    TextSize = 11,
+    TextXAlignment = Enum.TextXAlignment.Left,
+})
+
+local function makeInfoRow(label, value, y)
+    local row = create("Frame", infoPage, {
+        Position = UDim2.fromOffset(0, y),
+        Size = UDim2.new(1, 0, 0, 27),
+        BackgroundColor3 = COLORS.card,
+        BorderSizePixel = 0,
+    })
+    addCorner(row, 9)
+    create("TextLabel", row, {
+        BackgroundTransparency = 1,
+        Position = UDim2.fromOffset(9, 0),
+        Size = UDim2.new(0, 93, 1, 0),
+        Font = Enum.Font.Gotham,
+        Text = label,
+        TextColor3 = COLORS.muted,
+        TextSize = 9,
+        TextXAlignment = Enum.TextXAlignment.Left,
+    })
+    local valueLabel = create("TextLabel", row, {
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 103, 0, 0),
+        Size = UDim2.new(1, -111, 1, 0),
+        Font = Enum.Font.GothamSemibold,
+        Text = value,
+        TextColor3 = COLORS.text,
+        TextSize = 9,
+        TextXAlignment = Enum.TextXAlignment.Right,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+    })
+    return valueLabel
+end
+
+makeInfoRow("Display name", player.DisplayName, 23)
+makeInfoRow("Usuário", "@" .. player.Name, 53)
+makeInfoRow("User ID", tostring(player.UserId), 83)
+makeInfoRow("Conta", tostring(player.AccountAge) .. " dias", 113)
+local pingValue = makeInfoRow("Ping", "medindo...", 143)
+local deviceValue = makeInfoRow("Dispositivo", getDeviceLabel(), 173)
+makeInfoRow("Região / IP", "não fornecidos pelo Roblox", 203)
+
+local pingRefreshToken = 0
+local function refreshPing()
+    pingRefreshToken += 1
+    local token = pingRefreshToken
+
+    local function update()
+        if token ~= pingRefreshToken or not screenGui.Parent or not infoPage.Visible then
+            return
+        end
+
+        local ok, pingSeconds = pcall(function()
+            return player:GetNetworkPing()
+        end)
+        if ok and type(pingSeconds) == "number" then
+            pingValue.Text = string.format("%d ms", math.floor(pingSeconds * 1000 + 0.5))
+        else
+            pingValue.Text = "indisponível"
+        end
+        deviceValue.Text = getDeviceLabel()
+        task.delay(1, update)
+    end
+
+    update()
+end
+refreshPing()
+
+-- Categoria Visual: mantém a recuperação do cursor e seus atalhos.
+create("TextLabel", visualPage, {
+    BackgroundTransparency = 1,
+    Size = UDim2.new(1, 0, 0, 20),
+    Font = Enum.Font.GothamBold,
+    Text = "VISUAL",
+    TextColor3 = COLORS.text,
+    TextSize = 11,
+    TextXAlignment = Enum.TextXAlignment.Left,
+})
+
+local statusCard = create("Frame", visualPage, {
+    Position = UDim2.fromOffset(0, 24),
+    Size = UDim2.new(1, 0, 0, 49),
     BackgroundColor3 = COLORS.card,
     BorderSizePixel = 0,
 })
-addCorner(statusCard, 15)
+addCorner(statusCard, 12)
 addStroke(statusCard, Color3.fromRGB(70, 83, 112), 0.72, 1)
 
 local statusDot = create("Frame", statusCard, {
-    Position = UDim2.fromOffset(16, 23),
+    Position = UDim2.fromOffset(12, 19),
     Size = UDim2.fromOffset(10, 10),
     BackgroundColor3 = COLORS.green,
     BorderSizePixel = 0,
@@ -331,102 +513,153 @@ addCorner(statusDot, 10)
 
 local statusText = create("TextLabel", statusCard, {
     BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(37, 10),
-    Size = UDim2.new(1, -52, 0, 20),
+    Position = UDim2.fromOffset(30, 5),
+    Size = UDim2.new(1, -40, 0, 19),
     Font = Enum.Font.GothamSemibold,
     Text = "Cursor pronto",
     TextColor3 = COLORS.text,
-    TextSize = 13,
+    TextSize = 11,
     TextXAlignment = Enum.TextXAlignment.Left,
 })
 
 local statusHint = create("TextLabel", statusCard, {
     BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(37, 30),
-    Size = UDim2.new(1, -52, 0, 17),
+    Position = UDim2.fromOffset(30, 24),
+    Size = UDim2.new(1, -40, 0, 17),
     Font = Enum.Font.Gotham,
-    Text = "Use a tecla escolhida se o mouse travar.",
+    Text = "Use o botão abaixo se o mouse travar.",
     TextColor3 = COLORS.muted,
-    TextSize = 10,
+    TextSize = 8,
     TextXAlignment = Enum.TextXAlignment.Left,
+    TextTruncate = Enum.TextTruncate.AtEnd,
 })
 
-local fixButton = create("TextButton", panel, {
-    Position = UDim2.fromOffset(24, 176),
-    Size = UDim2.new(1, -48, 0, 57),
+local fixButton = create("TextButton", visualPage, {
+    Position = UDim2.fromOffset(0, 81),
+    Size = UDim2.new(1, 0, 0, 51),
     BackgroundColor3 = COLORS.accent2,
     BorderSizePixel = 0,
     AutoButtonColor = false,
     Font = Enum.Font.GothamBold,
     Text = "LIBERAR CURSOR",
     TextColor3 = COLORS.text,
-    TextSize = 14,
+    TextSize = 12,
 })
-addCorner(fixButton, 15)
+addCorner(fixButton, 13)
 create("UIGradient", fixButton, {
-    Color = ColorSequence.new(
-        Color3.fromRGB(73, 194, 255),
-        Color3.fromRGB(131, 93, 255)
-    ),
+    Color = ColorSequence.new(Color3.fromRGB(73, 194, 255), Color3.fromRGB(131, 93, 255)),
     Rotation = 0,
 })
 addStroke(fixButton, Color3.fromRGB(181, 223, 255), 0.68, 1)
 
-local keyCard = create("Frame", panel, {
-    Position = UDim2.fromOffset(24, 246),
-    Size = UDim2.new(1, -48, 0, 55),
+local keyCard = create("Frame", visualPage, {
+    Position = UDim2.fromOffset(0, 140),
+    Size = UDim2.new(1, 0, 0, 52),
     BackgroundColor3 = COLORS.card,
     BorderSizePixel = 0,
 })
-addCorner(keyCard, 15)
+addCorner(keyCard, 12)
 addStroke(keyCard, Color3.fromRGB(70, 83, 112), 0.74, 1)
 
 create("TextLabel", keyCard, {
     BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(15, 8),
-    Size = UDim2.new(1, -125, 0, 18),
+    Position = UDim2.fromOffset(10, 5),
+    Size = UDim2.new(1, -115, 0, 18),
     Font = Enum.Font.GothamSemibold,
     Text = "TECLA PARA LIBERAR",
     TextColor3 = COLORS.muted,
-    TextSize = 9,
+    TextSize = 8,
     TextXAlignment = Enum.TextXAlignment.Left,
 })
 
 local keyButton = create("TextButton", keyCard, {
     AnchorPoint = Vector2.new(1, 0.5),
-    Position = UDim2.new(1, -10, 0.5, 0),
-    Size = UDim2.fromOffset(104, 36),
+    Position = UDim2.new(1, -8, 0.5, 0),
+    Size = UDim2.fromOffset(94, 34),
     BackgroundColor3 = Color3.fromRGB(36, 44, 64),
     BorderSizePixel = 0,
     AutoButtonColor = false,
     Font = Enum.Font.GothamBold,
     Text = FIX_KEY.Name,
     TextColor3 = COLORS.accent,
-    TextSize = 12,
+    TextSize = 10,
 })
-addCorner(keyButton, 11)
+addCorner(keyButton, 10)
 
 local keyHint = create("TextLabel", keyCard, {
     BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(15, 27),
-    Size = UDim2.new(1, -130, 0, 17),
+    Position = UDim2.fromOffset(10, 23),
+    Size = UDim2.new(1, -115, 0, 17),
     Font = Enum.Font.Gotham,
-    Text = "Toque aqui e pressione uma tecla",
+    Text = "Toque e escolha uma tecla",
     TextColor3 = COLORS.muted,
-    TextSize = 9,
+    TextSize = 8,
     TextXAlignment = Enum.TextXAlignment.Left,
+    TextTruncate = Enum.TextTruncate.AtEnd,
 })
 
-create("TextLabel", panel, {
+create("TextLabel", visualPage, {
     BackgroundTransparency = 1,
-    AnchorPoint = Vector2.new(0.5, 1),
-    Position = UDim2.new(0.5, 0, 1, -13),
-    Size = UDim2.new(1, -40, 0, 18),
+    Position = UDim2.fromOffset(0, 203),
+    Size = UDim2.new(1, 0, 0, 20),
     Font = Enum.Font.Gotham,
-    Text = "RIGHT SHIFT  •  mostrar / esconder painel",
+    Text = "RIGHT SHIFT  •  mostrar / esconder",
     TextColor3 = COLORS.muted,
-    TextSize = 9,
+    TextSize = 8,
+    TextXAlignment = Enum.TextXAlignment.Center,
 })
+
+local selectedTab = infoTab
+local activePage = infoPage
+local categoryTransition = 0
+
+local function setCategory(category)
+    local nextPage = category == "Info" and infoPage or visualPage
+    local nextTab = category == "Info" and infoTab or visualTab
+    if activePage == nextPage then
+        return
+    end
+
+    categoryTransition += 1
+    local transitionId = categoryTransition
+    selectedTab = nextTab
+    activePage = nextPage
+
+    tween(infoTab, 0.15, {
+        BackgroundTransparency = nextTab == infoTab and 0 or 0.25,
+        TextColor3 = nextTab == infoTab and COLORS.text or COLORS.muted,
+    })
+    tween(visualTab, 0.15, {
+        BackgroundTransparency = nextTab == visualTab and 0 or 0.25,
+        TextColor3 = nextTab == visualTab and COLORS.text or COLORS.muted,
+    })
+
+    local fadeOut = tween(content, 0.1, {GroupTransparency = 1})
+    fadeOut.Completed:Connect(function(playbackState)
+        if playbackState ~= Enum.PlaybackState.Completed or transitionId ~= categoryTransition then
+            return
+        end
+        infoPage.Visible = nextPage == infoPage
+        visualPage.Visible = nextPage == visualPage
+        if nextPage == infoPage then
+            refreshPing()
+        else
+            pingRefreshToken += 1
+        end
+        tween(content, 0.13, {GroupTransparency = 0})
+    end)
+end
+
+infoTab.Activated:Connect(function()
+    setCategory("Info")
+end)
+visualTab.Activated:Connect(function()
+    setCategory("Visual")
+end)
+infoTab.BackgroundTransparency = 0
+infoTab.TextColor3 = COLORS.text
+visualTab.BackgroundTransparency = 0.25
+visualTab.TextColor3 = COLORS.muted
 
 -- Botão flutuante que continua acessível depois de minimizar o painel.
 local floatingButton = create("TextButton", screenGui, {
