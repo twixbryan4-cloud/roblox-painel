@@ -200,7 +200,8 @@ local panel = create("CanvasGroup", shade, {
     Name = "Panel",
     AnchorPoint = Vector2.new(0.5, 0.5),
     Position = UDim2.fromScale(0.5, 0.5),
-    Size = UDim2.fromOffset(490, 340),
+    Size = UDim2.fromOffset(510, 355),
+    GroupTransparency = 1,
     BackgroundColor3 = COLORS.panel,
     BorderSizePixel = 0,
 })
@@ -475,10 +476,9 @@ addCorner(floatingDot, 10)
 addStroke(floatingDot, COLORS.panel, 0, 2)
 
 local isOpen = true
-panel.Size = UDim2.fromOffset(490, 340)
 task.defer(function()
     if screenGui.Parent then
-        tween(panel, 0.3, {Size = UDim2.fromOffset(510, 355)})
+        tween(panel, 0.3, {GroupTransparency = 0})
         tween(shade, 0.3, {BackgroundTransparency = 0.38})
     end
 end)
@@ -492,12 +492,8 @@ local function setPanelOpen(open)
     if open then
         shade.Visible = true
         shade.BackgroundTransparency = 1
-        panel.Size = UDim2.fromOffset(490, 340)
         panel.GroupTransparency = 1
-        tween(panel, 0.24, {
-            Size = UDim2.fromOffset(510, 355),
-            GroupTransparency = 0,
-        })
+        tween(panel, 0.24, {GroupTransparency = 0})
         tween(shade, 0.24, {BackgroundTransparency = 0.38})
 
         if floatingButton.Visible then
@@ -510,10 +506,7 @@ local function setPanelOpen(open)
             end)
         end
     else
-        tween(panel, 0.2, {
-            Size = UDim2.fromOffset(490, 340),
-            GroupTransparency = 1,
-        })
+        tween(panel, 0.2, {GroupTransparency = 1})
         tween(shade, 0.2, {BackgroundTransparency = 1})
         task.delay(0.21, function()
             if not isOpen then
