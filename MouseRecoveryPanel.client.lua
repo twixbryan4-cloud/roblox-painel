@@ -225,7 +225,11 @@ local logo = create("Frame", header, {
     BorderSizePixel = 0,
 })
 addCorner(logo, 14)
-addStroke(logo, COLORS.accent, 0.45, 1)
+addStroke(logo, COLORS.accent, 0.3, 1)
+create("UIGradient", logo, {
+    Color = ColorSequence.new(COLORS.accent, COLORS.accent2),
+    Rotation = 35,
+})
 
 create("TextLabel", logo, {
     BackgroundTransparency = 1,
@@ -266,9 +270,9 @@ local closeButton = create("TextButton", header, {
     BorderSizePixel = 0,
     AutoButtonColor = false,
     Font = Enum.Font.GothamSemibold,
-    Text = "×",
-    TextColor3 = COLORS.muted,
-    TextSize = 23,
+    Text = "−",
+    TextColor3 = COLORS.accent,
+    TextSize = 26,
 })
 addCorner(closeButton, 12)
 
@@ -287,6 +291,7 @@ local statusCard = create("Frame", panel, {
     BorderSizePixel = 0,
 })
 addCorner(statusCard, 15)
+addStroke(statusCard, Color3.fromRGB(70, 83, 112), 0.72, 1)
 
 local statusDot = create("Frame", statusCard, {
     Position = UDim2.fromOffset(16, 23),
@@ -330,6 +335,14 @@ local fixButton = create("TextButton", panel, {
     TextSize = 14,
 })
 addCorner(fixButton, 15)
+create("UIGradient", fixButton, {
+    Color = ColorSequence.new(
+        Color3.fromRGB(73, 194, 255),
+        Color3.fromRGB(131, 93, 255)
+    ),
+    Rotation = 0,
+})
+addStroke(fixButton, Color3.fromRGB(181, 223, 255), 0.68, 1)
 
 local keyCard = create("Frame", panel, {
     Position = UDim2.fromOffset(24, 246),
@@ -338,6 +351,7 @@ local keyCard = create("Frame", panel, {
     BorderSizePixel = 0,
 })
 addCorner(keyCard, 15)
+addStroke(keyCard, Color3.fromRGB(70, 83, 112), 0.74, 1)
 
 create("TextLabel", keyCard, {
     BackgroundTransparency = 1,
@@ -386,11 +400,56 @@ create("TextLabel", panel, {
     TextSize = 9,
 })
 
+-- Botão flutuante que continua acessível depois de minimizar o painel.
+local floatingButton = create("TextButton", screenGui, {
+    Name = "FloatingOpenButton",
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.new(1, -42, 1, -145),
+    Size = UDim2.fromOffset(58, 58),
+    BackgroundColor3 = COLORS.panel,
+    BorderSizePixel = 0,
+    AutoButtonColor = false,
+    Visible = false,
+    ZIndex = 10,
+    Text = "",
+})
+addCorner(floatingButton, 19)
+addStroke(floatingButton, COLORS.accent, 0.12, 1.5)
+create("UIGradient", floatingButton, {
+    Color = ColorSequence.new(
+        Color3.fromRGB(23, 37, 62),
+        Color3.fromRGB(49, 32, 83)
+    ),
+    Rotation = 45,
+})
+
+create("TextLabel", floatingButton, {
+    BackgroundTransparency = 1,
+    Size = UDim2.fromScale(1, 1),
+    Font = Enum.Font.GothamBold,
+    Text = "N",
+    TextColor3 = COLORS.accent,
+    TextSize = 22,
+    ZIndex = 11,
+})
+
+local floatingDot = create("Frame", floatingButton, {
+    AnchorPoint = Vector2.new(1, 0),
+    Position = UDim2.new(1, -5, 0, 5),
+    Size = UDim2.fromOffset(11, 11),
+    BackgroundColor3 = COLORS.green,
+    BorderSizePixel = 0,
+    ZIndex = 12,
+})
+addCorner(floatingDot, 10)
+addStroke(floatingDot, COLORS.panel, 0, 2)
+
 local isOpen = true
 
 local function setPanelOpen(open)
     isOpen = open
     if open then
+        floatingButton.Visible = false
         shade.Visible = true
         panel.Size = UDim2.fromOffset(490, 340)
         tween(panel, 0.18, {Size = UDim2.fromOffset(510, 355)})
@@ -401,6 +460,7 @@ local function setPanelOpen(open)
         task.delay(0.17, function()
             if not isOpen then
                 shade.Visible = false
+                floatingButton.Visible = true
             end
         end)
     end
@@ -452,6 +512,65 @@ end)
 
 closeButton.Activated:Connect(function()
     setPanelOpen(false)
+end)
+
+floatingButton.Activated:Connect(function()
+    if dragMoved then
+        dragMoved = false
+        return
+    end
+    setPanelOpen(true)
+end)
+
+local dragging = false
+local dragMoved = false
+local dragInput
+local dragStart
+local buttonStart
+
+floatingButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragMoved = false
+        dragInput = input
+        dragStart = input.Position
+        buttonStart = floatingButton.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+                task.delay(0.2, function()
+                    dragMoved = false
+                end)
+            end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    local isMouseDrag = dragInput
+        and dragInput.UserInputType == Enum.UserInputType.MouseButton1
+        and input.UserInputType == Enum.UserInputType.MouseMovement
+    local isTouchDrag = input == dragInput
+
+    if dragging and (isMouseDrag or isTouchDrag) then
+        local delta = input.Position - dragStart
+        if delta.Magnitude > 7 then
+            dragMoved = true
+        end
+
+        local camera = workspace.CurrentCamera
+        if camera then
+            local viewport = camera.ViewportSize
+            local startX = buttonStart.X.Scale * viewport.X + buttonStart.X.Offset
+            local startY = buttonStart.Y.Scale * viewport.Y + buttonStart.Y.Offset
+            local halfSize = floatingButton.AbsoluteSize / 2
+            local x = math.clamp(startX + delta.X, halfSize.X, viewport.X - halfSize.X)
+            local y = math.clamp(startY + delta.Y, halfSize.Y, viewport.Y - halfSize.Y)
+            floatingButton.Position = UDim2.fromOffset(x, y)
+        end
+    end
 end)
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
