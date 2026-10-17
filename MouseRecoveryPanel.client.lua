@@ -20,7 +20,8 @@ end
 
 local FIX_KEY = Enum.KeyCode.F6
 local PANEL_KEY = Enum.KeyCode.RightShift
-local VIDEO_ASSET_ID = "https://vt.tiktok.com/ZSgYQECos/" -- Troque por rbxassetid://ID se o Roblox não aceitar o link
+local VIDEO_ASSET_ID = "https://vt.tiktok.com/ZSgYQECos/" -- Troque por rbxassetid://ID quando tiver o asset Roblox
+local HAS_ROBLOX_VIDEO_ASSET = string.match(VIDEO_ASSET_ID, "^rbxassetid://%d+$") ~= nil
 local choosingKey = false
 local isFixing = false
 
@@ -204,7 +205,7 @@ local panel = create("CanvasGroup", shade, {
     Size = UDim2.fromOffset(510, 355),
     GroupTransparency = 1,
     BackgroundColor3 = COLORS.panel,
-    BackgroundTransparency = 0.16,
+    BackgroundTransparency = 0.48,
     BorderSizePixel = 0,
     ZIndex = 1,
 })
@@ -217,7 +218,7 @@ local backgroundVideo = create("VideoFrame", panel, {
     ZIndex = 1,
     Looped = true,
     Volume = 0,
-    Visible = VIDEO_ASSET_ID ~= "",
+    Visible = HAS_ROBLOX_VIDEO_ASSET,
 })
 addCorner(backgroundVideo, 22)
 
@@ -225,14 +226,14 @@ local videoTint = create("Frame", panel, {
     Name = "VideoTint",
     Size = UDim2.fromScale(1, 1),
     BackgroundColor3 = COLORS.background,
-    BackgroundTransparency = 0.58,
+    BackgroundTransparency = 0.66,
     BorderSizePixel = 0,
     ZIndex = 1,
     Visible = VIDEO_ASSET_ID ~= "",
 })
 addCorner(videoTint, 22)
 
-if VIDEO_ASSET_ID ~= "" then
+if HAS_ROBLOX_VIDEO_ASSET then
     backgroundVideo.Loaded:Connect(function()
         backgroundVideo:Play()
     end)
@@ -244,8 +245,10 @@ if VIDEO_ASSET_ID ~= "" then
     if not videoSourceAccepted then
         backgroundVideo.Visible = false
         videoTint.Visible = false
-        warn("[NOVA] O Roblox não aceitou o link externo de vídeo. Substitua VIDEO_ASSET_ID por um ID rbxassetid://.")
+        warn("[NOVA] Não foi possível carregar o asset. Confira o ID e as permissões do vídeo.")
     end
+else
+    warn("[NOVA] O link do TikTok não é um asset reproduzível. O painel continua translúcido; use rbxassetid://ID para tocar o vídeo.")
 end
 
 addCorner(panel, 22)
@@ -465,7 +468,7 @@ local function makeInfoRow(label, value, y)
         Position = UDim2.fromOffset(0, y),
         Size = UDim2.new(1, 0, 0, 27),
         BackgroundColor3 = COLORS.card,
-        BackgroundTransparency = 0.28,
+        BackgroundTransparency = 0.4,
         BorderSizePixel = 0,
     })
     addCorner(row, 9)
@@ -542,7 +545,7 @@ local statusCard = create("Frame", visualPage, {
     Position = UDim2.fromOffset(0, 24),
     Size = UDim2.new(1, 0, 0, 49),
     BackgroundColor3 = COLORS.card,
-    BackgroundTransparency = 0.26,
+    BackgroundTransparency = 0.38,
     BorderSizePixel = 0,
 })
 addCorner(statusCard, 12)
@@ -601,7 +604,7 @@ local keyCard = create("Frame", visualPage, {
     Position = UDim2.fromOffset(0, 140),
     Size = UDim2.new(1, 0, 0, 52),
     BackgroundColor3 = COLORS.card,
-    BackgroundTransparency = 0.26,
+    BackgroundTransparency = 0.38,
     BorderSizePixel = 0,
 })
 addCorner(keyCard, 12)
