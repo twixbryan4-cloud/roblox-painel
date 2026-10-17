@@ -7,7 +7,16 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+if not player then
+    warn("[Mouse Recovery] Coloque este código em um LocalScript dentro de StarterPlayer > StarterPlayerScripts.")
+    return
+end
+
+local playerGui = player:WaitForChild("PlayerGui", 10)
+if not playerGui then
+    warn("[Mouse Recovery] PlayerGui não ficou disponível. Inicie o jogo com Play no Roblox Studio.")
+    return
+end
 
 local FIX_KEY = Enum.KeyCode.F6
 local PANEL_KEY = Enum.KeyCode.RightShift
