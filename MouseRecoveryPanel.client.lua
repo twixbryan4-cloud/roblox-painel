@@ -530,6 +530,16 @@ create("TextLabel", infoPage, {
     TextXAlignment = Enum.TextXAlignment.Left,
 })
 
+local INFO_ICONS = {
+    ["Display name"] = "◉",
+    ["Usuário"] = "♟",
+    ["User ID"] = "#",
+    ["Conta"] = "◷",
+    ["Ping"] = "⌁",
+    ["Dispositivo"] = "▣",
+    ["Região / IP"] = "◎",
+}
+
 local function makeInfoRow(label, value, y)
     local row = create("Frame", infoPage, {
         Position = UDim2.fromOffset(0, y),
@@ -541,8 +551,18 @@ local function makeInfoRow(label, value, y)
     addCorner(row, 9)
     create("TextLabel", row, {
         BackgroundTransparency = 1,
-        Position = UDim2.fromOffset(9, 0),
-        Size = UDim2.new(0, 93, 1, 0),
+        Position = UDim2.fromOffset(8, 0),
+        Size = UDim2.fromOffset(17, 27),
+        Font = Enum.Font.Arcade,
+        Text = INFO_ICONS[label] or "•",
+        TextColor3 = COLORS.accent,
+        TextSize = 9,
+        TextXAlignment = Enum.TextXAlignment.Center,
+    })
+    create("TextLabel", row, {
+        BackgroundTransparency = 1,
+        Position = UDim2.fromOffset(28, 0),
+        Size = UDim2.new(0, 75, 1, 0),
         Font = Enum.Font.Code,
         Text = label,
         TextColor3 = COLORS.muted,
@@ -551,8 +571,8 @@ local function makeInfoRow(label, value, y)
     })
     local valueLabel = create("TextLabel", row, {
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 103, 0, 0),
-        Size = UDim2.new(1, -111, 1, 0),
+        Position = UDim2.new(0, 107, 0, 0),
+        Size = UDim2.new(1, -115, 1, 0),
         Font = Enum.Font.Code,
         Text = value,
         TextColor3 = COLORS.text,
@@ -730,7 +750,7 @@ create("TextLabel", configPage, {
     BackgroundTransparency = 1,
     Size = UDim2.new(1, 0, 0, 20),
     Font = Enum.Font.Arcade,
-    Text = "APARÊNCIA",
+    Text = "⚙  APARÊNCIA",
     TextColor3 = COLORS.text,
     TextSize = 11,
     TextXAlignment = Enum.TextXAlignment.Left,
