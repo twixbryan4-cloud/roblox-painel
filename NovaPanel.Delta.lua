@@ -1,4 +1,4 @@
--- NOVA / Camera Panel v1.4 + fundo embutido para executor
+-- NOVA / Camera Panel v1.5 + fundo embutido para executor
 -- Abra este arquivo no executor. Video em loop, sem ID e sem download externo.
 -- Requer getcustomasset/writefile e suporte do cliente a WebM VP8.
 -- A reproducao precisa ser confirmada no Delta; a interface funciona sem o video.
@@ -475,6 +475,7 @@ local gui = make("ScreenGui", {
 }, playerGui)
 gui:SetAttribute("Sensitivity", sensitivity)
 gui:SetAttribute("BackgroundVideoId", backgroundVideoId)
+gui:SetAttribute("NovaVersion", "1.5")
 local teardown = make("BindableEvent", { Name = "Teardown" }, gui)
 local root = make("Frame", {
     Name = "Canvas", BackgroundTransparency = 1, BorderSizePixel = 0,
@@ -543,6 +544,9 @@ syncBackgroundVideo = function()
     if not alive then return end
     local show = embeddedMedia.enabled and not embeddedMedia.failed and backgroundVideoId ~= "" and opened and not booting
     if show then
+        -- O VideoFrame precisa participar da renderizacao durante o carregamento.
+        -- Nao esperar IsLoaded para torna-lo visivel e pedir reproducao.
+        backgroundVideo.Visible, videoShade.Visible = true, true
         if backgroundVideo.Video ~= backgroundVideoId then
             embeddedMedia.token = embeddedMedia.token + 1
             local token = embeddedMedia.token
@@ -564,12 +568,12 @@ syncBackgroundVideo = function()
             end)
         end
         local ready = backgroundVideo.IsLoaded
-        backgroundVideo.Visible, videoShade.Visible = ready, ready
         if ready then
             backgroundVideo.TimePosition = math.min(backgroundVideoTime, math.max(0, backgroundVideo.TimeLength - 0.01))
             backgroundVideo:Play()
             embeddedMedia.setMessage("Reproduzindo em loop")
         else
+            backgroundVideo:Play()
             embeddedMedia.setMessage("Carregando video local...")
         end
     else
@@ -677,7 +681,7 @@ make("UIPadding", { PaddingBottom = UDim.new(0, 2), PaddingRight = UDim.new(0, 2
 local hero = make("Frame", {
     BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 24), LayoutOrder = 1,
 }, body)
-local headline = text(hero, "Câmera", 12, C.text,
+local headline = text(hero, "Câmera · v1.5", 10, C.text,
     UDim2.fromOffset(0, 0), UDim2.new(1, 0, 0, 20), MONO_BOLD)
 local subtitle = text(hero, "Ajuste o seu movimento.", 11, C.muted,
     UDim2.fromOffset(0, 29), UDim2.new(1, 0, 0, 17))
