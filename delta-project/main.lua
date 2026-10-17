@@ -1,4 +1,4 @@
--- delta-project / reference panel / 0.4.0
+-- delta-project / reference panel / 0.4.1
 -- Standalone client UI. Optional cached video background; no remote Lua libraries.
 local environment = _G
 if type(getgenv) == "function" then
@@ -9,7 +9,7 @@ local ENV_KEY = "__DELTA_PROJECT_INSTANCE"
 local previous = environment[ENV_KEY]
 if type(previous) == "table" and type(previous.Destroy) == "function" then previous:Destroy() end
 
-local App = {Name = "delta-project", Version = "0.4.0", Active = true, Cleanups = {}, Actions = {}, Listeners = {}, State = {}, UI = {}, FX = {}}
+local App = {Name = "delta-project", Version = "0.4.1", Active = true, Cleanups = {}, Actions = {}, Listeners = {}, State = {}, UI = {}, FX = {}}
 environment[ENV_KEY] = App
 function App:AddCleanup(callback)
     assert(self.Active and type(callback) == "function", "Invalid cleanup")
@@ -499,7 +499,7 @@ local function start()
     UI.BracketScale=UI:New("UIScale",{Scale=1},brackets)
     for _,entry in ipairs({{0,0,1,1},{140,0,-1,1},{0,245,1,-1},{140,245,-1,-1}}) do UI:Line(brackets,entry[1],entry[2],entry[1]+entry[3]*18,entry[2],C.Muted) UI:Line(brackets,entry[1],entry[2],entry[1],entry[2]+entry[4]*24,C.Muted) end
     UI.Float=UI:Click(UI.Gui,"≡",function() UI:ToggleWindow(not UI.Visible) end,{Name="OpenPanel",Position=UDim2.fromOffset(12,100),Size=UDim2.fromOffset(38,38),BackgroundColor3=C.Panel,TextSize=21,ZIndex=30}) UI:Corner(UI.Float,10) UI:Stroke(UI.Float,0.15)
-    UI.Watermark=UI:Text(UI.Gui,"DELTA / 0.4.0",10,C.Text,{Name="Watermark",Position=UDim2.new(1,-310,0,7),Size=UDim2.fromOffset(296,23),TextXAlignment=Enum.TextXAlignment.Right})
+    UI.Watermark=UI:Text(UI.Gui,"DELTA / 0.4.1",10,C.Text,{Name="Watermark",Position=UDim2.new(1,-310,0,7),Size=UDim2.fromOffset(296,23),TextXAlignment=Enum.TextXAlignment.Right})
     UI.ToastLabel=UI:Text(UI.Gui,"",11,C.Text,{Name="Notification",Visible=false,AnchorPoint=Vector2.new(0.5,1),Position=UDim2.new(0.5,0,1,-12),Size=UDim2.fromOffset(390,34),TextXAlignment=Enum.TextXAlignment.Center,BackgroundColor3=C.Card,BackgroundTransparency=0.05,ZIndex=90}) UI:Corner(UI.ToastLabel,5) UI:Stroke(UI.ToastLabel,0.25)
     UI.Crosshair=UI:New("Frame",{Name="Crosshair",Visible=false,AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5,0.5),Size=UDim2.fromOffset(1,1),BackgroundTransparency=1},UI.Gui)
     function UI:DrawCrosshair()
@@ -1261,8 +1261,30 @@ local function start()
         task.delay(12,function()
             if not self:BackdropCurrent(token) or self.Backdrop.Video~=video or self.Backdrop.Ready then return end
             if not self.Visible then self.Backdrop.DeferredTimeout=nextAttempt return end
-            nextAttempt("o decoder nao carregou o video em 12 segundos")
+            nextAttempt(video.IsLoaded and "video carregou, mas o tempo nao avancou em 12 segundos" or "o decoder nao carregou o video em 12 segundos")
         end)
+    end
+    function UI:StepBackdrop(dt)
+        local b=self.Backdrop
+        if not b or not b.Video or not self.Visible or App.State.BackdropMode~="Video" then return end
+        b.Poll=(b.Poll or 0)+dt
+        if b.Poll<0.1 then return end
+        local elapsed=math.min(b.Poll,0.5) b.Poll=0
+        local video=b.Video
+        local position=tonumber(video.TimePosition) or 0
+        local moved=math.abs(position-(b.LastPosition or 0))>0.001
+        b.LastPosition=position
+        if moved then
+            b.Stalled=0
+            if not b.Ready then
+                b.Ready=true b.Loading=false b.Force=false b.DeferredTimeout=nil
+                b.Poster.Visible=false
+                self:SetBackdropStatus("Reproduzindo video ("..b.Format.."). Loop ativo; pausa ao ocultar.")
+            end
+        elseif b.Ready then
+            b.Stalled=(b.Stalled or 0)+elapsed
+            if b.Stalled>=6 and b.NextAttempt then b.NextAttempt("o tempo do video ficou parado por 6 segundos") end
+        end
     end
     function UI:TryBackdropVideo(token,index)
         if not self:BackdropCurrent(token) then return end
@@ -1279,14 +1301,14 @@ local function start()
         if not self:BackdropCurrent(token) then return end
         if not uri then b.Error=reason return self:TryBackdropVideo(token,index+1) end
         local created,video=pcall(function()
-            return self:New("VideoFrame",{Name="BackgroundVideo",Visible=false,BackgroundTransparency=1,AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5,0.5),Size=UDim2.fromScale(1,1),Looped=true,Volume=App.State.BackdropVolume,ZIndex=1},b.Layer)
+            return self:New("VideoFrame",{Name="BackgroundVideo",Visible=true,BackgroundTransparency=1,AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5,0.5),Size=UDim2.fromScale(1,1),Looped=true,Volume=App.State.BackdropVolume,ZIndex=1},b.Layer)
         end)
         if not created then b.Error="VideoFrame indisponivel" return self:TryBackdropVideo(token,index+1) end
-        b.Video=video b.Ready=false self:FitBackdrop()
+        b.Video=video b.Ready=false b.Format=item.Kind b.LastPosition=0 b.Stalled=0 b.Poll=0 self:FitBackdrop()
         local attempted=false
         local function nextAttempt(message)
             if attempted or not self:BackdropCurrent(token) or b.Video~=video then return end
-            attempted=true b.Error=message b.Video=nil b.Ready=false
+            attempted=true b.Error=message b.Video=nil b.Ready=false b.NextAttempt=nil b.DeferredTimeout=nil b.Poster.Visible=true
             pcall(function() video:Pause() video.Video="" end) video:Destroy()
             task.defer(function() if self:BackdropCurrent(token) then self:TryBackdropVideo(token,index+1) end end)
         end
@@ -1294,13 +1316,15 @@ local function start()
             if not self:BackdropCurrent(token) or b.Video~=video or not video.IsLoaded then return end
             local playing=pcall(function() if self.Visible then video:Play() else video:Pause() end end)
             if not playing then return nextAttempt("executor recusou a reproducao de "..item.Kind) end
-            b.Ready=true b.Loading=false b.Force=false b.DeferredTimeout=nil
-            video.Visible=true b.Poster.Visible=false
-            self:SetBackdropStatus("Video carregado ("..item.Kind.."). Loop ativo; pausa ao ocultar.")
+            if not b.Ready then self:SetBackdropStatus("Video carregado ("..item.Kind.."); verificando movimento...") end
         end
+        b.NextAttempt=nextAttempt
         App:Connect(video.Loaded,ready,video)
-        local assigned=pcall(function() video.Video=uri end)
-        if not assigned then return nextAttempt("executor recusou o asset de video "..item.Kind) end
+        local assigned=pcall(function()
+            video.Video=uri
+            if self.Visible then video:Play() else video:Pause() end
+        end)
+        if not assigned then return nextAttempt("executor recusou o asset ou a reproducao de "..item.Kind) end
         ready()
         self:WatchBackdrop(token,video,nextAttempt)
     end
@@ -1309,11 +1333,11 @@ local function start()
         if not b then return end
         local mode=App.State.BackdropMode
         b.Layer.Visible=mode~="Off"
-        b.Layer.GroupTransparency=App.State.Opacity
-        b.Shade.BackgroundTransparency=1-App.State.BackdropDarkness
+        b.Layer.BackgroundTransparency=App.State.Opacity
+        b.Shade.BackgroundTransparency=(1-App.State.BackdropDarkness)*(1-App.State.Opacity)
         b.Poster.ScaleType=App.State.BackdropFit=="Crop" and Enum.ScaleType.Crop or Enum.ScaleType.Fit
         if b.Mode~=mode then
-            b.Token=b.Token+1 b.Mode=mode b.Ready=false b.Loading=false b.Failed=false b.DeferredTimeout=nil
+            b.Token=b.Token+1 b.Mode=mode b.Ready=false b.Loading=false b.Failed=false b.DeferredTimeout=nil b.NextAttempt=nil b.Error=nil b.Stalled=0 b.Poll=0
             if b.Video then pcall(function() b.Video:Pause() b.Video.Video="" end) b.Video:Destroy() b.Video=nil end
             b.Poster.Visible=true
         end
@@ -1321,7 +1345,7 @@ local function start()
         if mode=="Off" then self:SetBackdropStatus("Fundo desativado") return end
         if b.Video then
             b.Video.Volume=App.State.BackdropVolume
-            pcall(function() if self.Visible and b.Ready then b.Video:Play() else b.Video:Pause() end end)
+            pcall(function() if self.Visible then b.Video:Play() else b.Video:Pause() end end)
             if self.Visible and b.DeferredTimeout then local callback=b.DeferredTimeout b.DeferredTimeout=nil self:WatchBackdrop(b.Token,b.Video,callback) end
             return
         end
@@ -1347,10 +1371,20 @@ local function start()
         b.Mode=nil b.Failed=false b.Force=true b.PosterAsset=nil
         self:SyncBackdrop()
     end
+    function UI:CopyBackdropStatus()
+        local b=self.Backdrop local video=b.Video
+        local report="delta-project "..App.Version.."\nMode: "..App.State.BackdropMode.."\nStatus: "..b.Status
+        if video then report=report.."\nFormat: "..tostring(b.Format).."\nIsLoaded: "..tostring(video.IsLoaded).."\nPlaying: "..tostring(video.Playing).."\nTimePosition: "..tostring(video.TimePosition).."\nTimeLength: "..tostring(video.TimeLength) end
+        local clipboard=fileFunction("setclipboard")
+        local copied=clipboard and pcall(clipboard,report)
+        self:Toast(copied and "Status do fundo copiado" or "Clipboard indisponivel; status no console")
+        print(report)
+        return report
+    end
     UI.Backdrop={Token=0,Status="Preparando fundo..."}
     do
         local b=UI.Backdrop
-        b.Layer=UI:New("CanvasGroup",{Name="MediaBackground",Visible=false,Size=UDim2.fromScale(1,1),BackgroundColor3=C.Panel,ClipsDescendants=true,GroupTransparency=0,ZIndex=0},UI.Main)
+        b.Layer=UI:New("Frame",{Name="MediaBackground",Visible=false,Size=UDim2.fromScale(1,1),BackgroundColor3=C.Panel,ClipsDescendants=true,ZIndex=0},UI.Main)
         UI:Corner(b.Layer,6)
         b.Poster=UI:New("ImageLabel",{Name="BackgroundPoster",Image="",BackgroundTransparency=1,Size=UDim2.fromScale(1,1),ScaleType=Enum.ScaleType.Crop,ZIndex=0},b.Layer)
         b.Shade=UI:New("Frame",{Name="BackgroundShade",BackgroundColor3=C.Panel,BackgroundTransparency=0.52,Size=UDim2.fromScale(1,1),ZIndex=2},b.Layer)
@@ -1503,7 +1537,7 @@ local function start()
         UI.ConfigItems=UI:New("ScrollingFrame",{Name="SavedConfigs",BackgroundColor3=C.Panel,Size=UDim2.fromScale(1,1),ScrollBarThickness=2,CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y},row)
         UI:Button(card,"Save config",function() App:SaveConfig() end) UI:Button(card,"Load config",function() App:LoadConfig() end) UI:Button(card,"Refresh list",function() UI:RefreshConfigList() end) UI:Button(card,"Copy config",function() App:CopyConfig() end) UI:Button(card,"Delete config",function() App:DeleteConfig() end) UI:Button(card,"Reset config",function() App:Reset() end)
         card=UI:Card(left,"Background") UI:Dropdown(card,"Media","BackdropMode") UI:Dropdown(card,"Framing","BackdropFit") UI:Slider(card,"Darkness","BackdropDarkness",0.02,"%",nil,100) UI:Slider(card,"Volume","BackdropVolume",0.05,"%",nil,100)
-        UI:Button(card,"Reload video",function() UI:ReloadBackdrop() end)
+        UI:Button(card,"Reload video",function() UI:ReloadBackdrop() end) UI:Button(card,"Copy video status",function() UI:CopyBackdropStatus() end)
         local statusRow=UI:Row(card,"Background status",64)
         UI.BackdropStatus=UI:Text(statusRow,UI.Backdrop.Status,10,C.Muted,{Size=UDim2.fromScale(1,1),TextWrapped=true,TextTruncate=Enum.TextTruncate.None,TextYAlignment=Enum.TextYAlignment.Top})
         card=UI:Card(left,"Geometry") UI:Wireframe(card)
@@ -1535,6 +1569,7 @@ local function start()
     App:Connect(RunService.RenderStepped,function(dt)
         elapsed,frames,espTime,rainbowTime=elapsed+dt,frames+1,espTime+dt,rainbowTime+dt
         FX:VideoStep(dt)
+        UI:StepBackdrop(dt)
         if UI.Visible and App.State.Preview and App.State.PreviewSpin and not UI.Pointer then UI.Yaw=UI.Yaw+math.rad(App.State.PreviewSpeed)*dt UI:RotatePreview() end
         if espTime>=0.25 then espTime=0 if App.State.ESP then FX:RefreshESP() end end
         if App.State.Rainbow and rainbowTime>=0.05 then
@@ -1547,11 +1582,11 @@ local function start()
         if elapsed>=1 then
             local pingOk,ping=pcall(function() return player:GetNetworkPing() end)
             local latency=pingOk and (tostring(math.floor(ping*1000)).."ms  /  ") or ""
-            UI.Watermark.Text="DELTA 0.4  /  "..player.DisplayName.."  /  "..math.floor(frames/elapsed).." fps  /  "..latency..os.date("%H:%M") elapsed,frames=0,0
+            UI.Watermark.Text="DELTA 0.4.1  /  "..player.DisplayName.."  /  "..math.floor(frames/elapsed).." fps  /  "..latency..os.date("%H:%M") elapsed,frames=0,0
         end
     end)
     App:ApplyAll() UI:RefreshPreview() UI:Select("World") UI:Fit()
-    UI:Toast("v0.4 · fundo em Menu > Background; visual em Blue look")
+    UI:Toast("v0.4.1 · correcao de video; ajustes em Menu > Background")
     print("[delta-project] Reference panel v"..App.Version.." loaded")
     return App
 end

@@ -1,4 +1,4 @@
-# delta-project — Video reference panel 0.4.0
+# delta-project — Video reference panel 0.4.1
 
 Painel Lua independente recriado a partir das imagens e dos dois videos enviados.
 Mantem o visual preto compacto, categorias na lateral, controles em duas colunas,
@@ -10,7 +10,7 @@ Codigo: `delta-project/main.lua`, branch `delta-project-zero` do repositorio
 ## Executar e comparar com o video
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/twixbryan4-cloud/roblox-painel/delta-project-zero/delta-project/main.lua?v=0.4.0"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/twixbryan4-cloud/roblox-painel/delta-project-zero/delta-project/main.lua?v=0.4.1"))()
 ```
 
 1. Toque em **Blue look**, na barra superior, para aplicar a composicao azul.
@@ -22,6 +22,24 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/twixbryan4-cloud/robl
 permite arrastar a janela, e arrastar a previa gira o avatar. Colunas e categorias
 tem rolagem independente e suporte a toque. Os efeitos comecam desativados;
 os presets os ativam em conjunto.
+
+## Correcao de reproducao (0.4.1)
+
+O video usa agora um Frame comum, fora de CanvasGroup. Ele fica visivel e recebe
+Play imediatamente apos a atribuicao do asset, antes de esperar Loaded. A versao
+0.4 o mantinha invisivel durante essa espera e o colocava em uma camada de fade.
+
+O status so mostra **Reproduzindo video** depois que TimePosition avanca. Se o
+asset carregar mas o relogio nao andar em 12 segundos, o script tenta o MP4.
+Se o video parar por 6 segundos durante a reproducao, tenta a proxima fonte.
+O relogio e conferido por amostragem no loop existente, sem depender de eventos
+de mudanca de TimePosition. O tempo oculto nao conta como travamento.
+
+**Menu → Background → Copy video status** copia versao, formato, IsLoaded,
+Playing, TimePosition e TimeLength para diagnosticar falhas no dispositivo.
+A transparencia da camada comum e o escurecimento sao ajustados sem CanvasGroup.
+Os testes simulam carregamento sem progresso e a inicializacao visivel; ainda
+nao validam o decoder real do Delta.
 
 ## Fundo de video (0.4)
 
@@ -40,7 +58,7 @@ Em **Menu → Background**:
 
 O script baixa o WebM (VP8/Vorbis, 768 px, 24 fps, cerca de 2 MB), salva um
 cache e registra o arquivo com `getcustomasset` ou `getsynasset`. Se o decoder
-nao o carregar em 12 segundos, tenta o MP4 do link original. O poster JPEG
+nao reproduzir em 12 segundos, tenta o MP4 do link original. O poster JPEG
 do mesmo video permanece enquanto carrega e quando a reproducao falha.
 WebM e poster ficam em `delta-project/media/`; o MP4 alternativo depende
 da disponibilidade do provedor original. O clip completo e seus creditos
